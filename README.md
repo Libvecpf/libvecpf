@@ -1,15 +1,19 @@
 The "Vector Printf Library"
-
+======
 For the GNU/Linux OS and GLIBC 2.10+
 
 Contributed by IBM Corporation
 # Libvecpf
+------
 This library extends ISO C printf so that it may print out vector data types.  The description of the extensions are in the AltiVec Technology Programming Interface Manual.  Below is a paraphrasing of the extensions:
 
 New separator chars (used like flags):
 
 ```
-',', ';', ':', '_'
+,
+;
+:
+_
 ```
 
 ```The default separator is a space unless the 'c' conversion is
