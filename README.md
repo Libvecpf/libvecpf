@@ -1,6 +1,7 @@
 #Libvecpf: The Vector Printf Library
 For the GNU/Linux Operating System and GNU C Library (glibc) Version 2.10+  
-_Contributed by IBM Corporation_
+_Contributed by IBM Corporation_  
+_Authors: Michael Brutman, Ryan S. Arnold_
 
 This library extends ISO C printf so that it may print out vector data types.  The description of the extensions are in the AltiVec Technology Programming Interface Manual.  Below is a paraphrasing of the extensions:
 
