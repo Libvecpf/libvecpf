@@ -4,12 +4,11 @@ For the GNU/Linux OS and GLIBC 2.10+
 
 Contributed by IBM Corporation
 
-_Please see [README](https://raw.github.com/Libvecpf/libvecpf/master/README "README") for more information._
-
 # Libvecpf
 This library extends ISO C printf so that it may print out vector data types.  The description of the extensions are in the AltiVec Technology Programming Interface Manual.  Below is a paraphrasing of the extensions:
 
 >  New separator chars (used like flags):
+>
 >    ',', ';', ':', '_'
 >
 >    The default separator is a space unless the 'c' conversion is
@@ -17,6 +16,7 @@ This library extends ISO C printf so that it may print out vector data types.  T
 >    is a null.  Only one separator character may be specified.
 >
 >  New size modifiers:
+>
 >    'vl', 'vh', 'lv', 'hv', 'v'
 >
 >  Valid modifiers and conversions (all else are undefined):
@@ -55,3 +55,5 @@ are what we know of at the moment.
 >  double                             2       N    Y
 
 The Altivec Programming Interface Manual defines how to print all of these data types except for pixel, which is undefined and double, which is newer than the Altivec PIM.  We add support for double but leave pixel alone.
+
+_Please see [README](https://raw.github.com/Libvecpf/libvecpf/master/README "README") for more information._
