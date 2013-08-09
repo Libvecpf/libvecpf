@@ -199,9 +199,7 @@ passing "-Wl,-u,__libvecpf_init" as in the following example:
 
   gcc -m32 -maltivec -O3 -g -fpic -static -Wall \
     -o ./test_vecpf_static \
-    ../ppc64-tc-utils/trunk/libvector-printf/test_vecpf.c \
-    -I../ppc64-tc-utils/trunk/libvector-printf/include.. \
-    -I../ppc64-tc-utils/trunk/libvector-printf -I. \
+    ../libvecpf/test_vecpf.c \
     -Wl,-u,__libvecpf_init ./libvecpf.a
 
 Using the additional printf length modifiers defined by this library in a
