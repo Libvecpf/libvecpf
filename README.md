@@ -41,7 +41,7 @@ v: float conversions; vectors are composed of 4 byte vals
 ## Quick intro to vectors:
 
 Vectors are 16 bytes long and can hold a variety of data types.  These
-are tyep vector data types that Libvecpf knows about at the moment.
+are the vector data types that Libvecpf knows about at the moment.
 
 ### Altivec and VSX:
  
