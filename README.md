@@ -7,20 +7,20 @@ Contributed by IBM Corporation
 # Libvecpf
 This library extends ISO C printf so that it may print out vector data types.  The description of the extensions are in the AltiVec Technology Programming Interface Manual.  Below is a paraphrasing of the extensions:
 
->  New separator chars (used like flags):
->
+New separator chars (used like flags):
+
 >    ',', ';', ':', '_'
->
+
 >    The default separator is a space unless the 'c' conversion is
 >    being used.  If 'c' is being used the default separator character
 >    is a null.  Only one separator character may be specified.
->
->  New size modifiers:
->
+
+New size modifiers:
+
 >    'vl', 'vh', 'lv', 'hv', 'v'
->
->  Valid modifiers and conversions (all else are undefined):
->
+
+Valid modifiers and conversions (all else are undefined):
+
 >      vl or lv: integer conversions; vectors are composed of four byte vals
 >      vh or hv: integer conversions; vectors are composed of two byte vals
 >      v: integer conversions; vectors are composed of 1 byte vals
@@ -37,8 +37,8 @@ This library extends ISO C printf so that it may print out vector data types.  T
 Vectors are 16 bytes long and can hold a variety of data types.  These
 are what we know of at the moment.
 
-> ### Altivec and VSX:
-> 
+### Altivec and VSX:
+ 
 >  Type                            Elements  VMX  VSX
 >  unsigned and signed char          16       Y    Y
 >  bool char                         16       Y    Y
@@ -49,8 +49,8 @@ are what we know of at the moment.
 >  float                              4       Y    Y
 >  pixel                              8       Y    Y
 
-> ### VSX only:
->
+### VSX only:
+
 >  Type                            Elements  VMX  VSX
 >  double                             2       N    Y
 
