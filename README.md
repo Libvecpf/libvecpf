@@ -14,9 +14,9 @@ New separator chars (used like flags):
 _
 ```
 
-  _The default separator is a space unless the 'c' conversion is  
-  being used.  If 'c' is being used the default separator character  
-  is a null.  Only one separator character may be specified._  
+_Note: The default separator is a space unless the 'c' conversion is  
+being used.  If 'c' is being used the default separator character  
+is a null.  Only one separator character may be specified._  
 
 New size modifiers:
 
@@ -42,12 +42,13 @@ v: float conversions; vectors are composed of 4 byte vals
 ## Quick intro to vectors:
 
 Vectors are 16 bytes long and can hold a variety of data types.  These
-are what we know of at the moment.
+are tyep vector data types that Libvecpf knows about at the moment.
 
 ### Altivec and VSX:
  
 ```
 Type                            Elements  VMX  VSX
+--------------------------------------------------
 unsigned and signed char          16       Y    Y
 bool char                         16       Y    Y
 unsigned and signed short          8       Y    Y
@@ -62,6 +63,7 @@ pixel                              8       Y    Y
 
 ```
 Type                            Elements  VMX  VSX
+--------------------------------------------------
 double                             2       N    Y
 ```
 
