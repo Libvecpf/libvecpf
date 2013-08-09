@@ -1,0 +1,182 @@
+ifneq (,)
+This Makefile requires GNU Make.
+endif
+
+top_srcdir := @top_srcdir@
+top_builddir = .
+
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+mandir=@mandir@
+sysheaders=@sysheaders@
+exec_prefix=@exec_prefix@
+prefix=@prefix@
+
+# Use this to determine whether to run VSX tests in the test-suite.
+native_vsx=@libvecpf_cv_native_vsx@
+
+# Install the header files here.
+ifndef includedir
+includedir = $(prefix)/include
+endif
+inst_includedir = $(install_root)$(includedir)
+
+# Install the library here.
+ifndef libdir
+libdir = $(exec_prefix)/lib
+endif
+inst_libdir = $(install_root)$(libdir)
+
+# Install the man pages here.
+ifndef mandir
+mandir = $(prefix)/man
+endif
+inst_mandir = $(install_root)$(mandir)
+
+lib_name = @PACKAGE_NAME@
+vecpf_name = @PACKAGE_NAME@
+vecpf_version = @PACKAGE_VERSION@
+
+STATIC_LIBRARY = lib@PACKAGE_NAME@.a
+
+# e.g. libvecpf-1.0.0.so
+SHARED_REALNAME_LIB = lib@PACKAGE_NAME@-@PACKAGE_VERSION@.so
+
+ # e.g. libvecpf.so.1.  Since this library intends to use symbol versioning there
+ # probably isn't ever a reason to move to .so.2 or later.
+SHARED_SONAME_LIB = lib@PACKAGE_NAME@.so.1
+
+SHARED_LINKERNAME_LIB = lib@PACKAGE_NAME@.so
+
+RANLIB = @RANLIB@
+
+LDCONFIG = /sbin/ldconfig
+INSTALL = install
+
+install_headers=$(top_srcdir)/include
+
+ALL_FLAGS = -maltivec @CFLAGS@ @picflag@
+
+all: @enable_shared@ @enable_static@
+
+shared: $(top_builddir)/$(SHARED_REALNAME_LIB) $(top_builddir)/$(SHARED_LINKERNAME_LIB) $(top_builddir)/$(SHARED_SONAME_LIB)
+
+static:  $(top_builddir)/$(STATIC_LIBRARY)
+
+
+#$(top_builddir)/vecpf.o: $(top_srcdir)/vecpf.c $(install_headers)/vecpf.h
+$(top_builddir)/vecpf.o: $(top_srcdir)/vecpf.c
+ifeq ($(sysheaders), ”)
+	@CC@ $(ALL_FLAGS) -Wall -fpic -c -o $(top_builddir)/vecpf.o $(top_srcdir)/vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir)
+	@echo
+else
+	@CC@ $(ALL_FLAGS) -Wall -fpic -c -o $(top_builddir)/vecpf.o $(top_srcdir)/vecpf.c -I$(install_headers) -I$(sysheaders) -I$(top_srcdir) -I$(top_builddir)
+	@echo
+endif
+
+# Only test the VSX code if the build system natively supports the VSX
+# instruction set.  This was tested for in the configure script.
+test_vsx=
+ifeq ($(native_vsx),yes)
+	test_vsx=@vsx@ -DTEST_VSX
+endif
+
+$(top_builddir)/test_vecpf_shared: shared
+	@CC@ $(ALL_FLAGS) -Wall -o $(top_builddir)/test_vecpf_shared $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(test_vsx) $(top_builddir)/$(SHARED_LINKERNAME_LIB)
+
+$(top_builddir)/test_vecpf_static: static
+	@CC@ $(ALL_FLAGS) -static -Wall -o $(top_builddir)/test_vecpf_static $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(test_vsx) -Wl,-u,__libvecpf_init $(top_builddir)/$(STATIC_LIBRARY)
+
+check_targets :=
+ifeq (@enable_shared@,shared)
+	check_targets += test_vecpf_shared
+endif
+ifeq (@enable_static@,static)
+	check_targets += test_vecpf_static
+endif
+
+check: $(check_targets)
+ifeq (@enable_shared@,shared)
+	@echo
+	LD_LIBRARY_PATH="$(top_builddir)/:$$LD_LIBRARY_PATH" $(top_builddir)/test_vecpf_shared
+endif
+ifeq (@enable_static@,static)
+	@echo
+	LD_LIBRARY_PATH="$(top_builddir)/:$$LD_LIBRARY_PATH" $(top_builddir)/test_vecpf_static
+endif
+
+.PHONY: check
+
+
+# Create libvecpf.so -> libvecpf.so.1 symlink.
+$(top_builddir)/$(SHARED_LINKERNAME_LIB): $(top_builddir)/$(SHARED_REALNAME_LIB)
+	@echo "+Creating linker .so symlink $(notdir $@) -> $(notdir $?)"
+	ln -f -s $? $@
+	@echo
+
+# Create libvecpf.so.1 -> libvecpf-1.0.1.so symlink.
+# The $(SHARED_SONAME_LIB) -> $(SHARED_REALNAME_LIB) symlink is supposed to
+# be created by ldconfig be reading the `soname' from the SHARED_REALNAME_LIB.
+$(top_builddir)/$(SHARED_SONAME_LIB): $(top_builddir)/$(SHARED_REALNAME_LIB)
+	@echo "+Running ldconfig to create the library compat symlink $(notdir $@) -> $(notdir $?)"
+	$(LDCONFIG) -l $(notdir $?)
+	@echo
+
+# This is the 'realname' shared object, i.e. the actual libvecpf binary file.
+$(top_builddir)/$(SHARED_REALNAME_LIB): $(top_builddir)/vecpf.o
+	@echo +Linking relocatable object files into $@.
+ifeq ($(sysheaders), ”)
+	@CC@ $(ALL_FLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o  -I$(top_srcdir)
+	@echo
+else
+	@CC@ $(ALL_FLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o -I$(sysheaders)  -I$(top_srcdir)
+	@echo
+endif
+
+$(top_builddir)/$(STATIC_LIBRARY): $(top_builddir)/vecpf.o
+	@echo +Archiving relocatable object files into $@.
+	$(AR) rc $@ $?
+	$(RANLIB) $@
+	@echo
+
+install: all
+	$(INSTALL) -d $(inst_libdir)
+ifeq ("@enable_static@","static")
+	$(INSTALL) -t $(inst_libdir) $(top_builddir)/$(STATIC_LIBRARY)
+endif
+	$(INSTALL) -t $(inst_libdir) $(top_builddir)/$(SHARED_REALNAME_LIB)
+	ln -f -s $(SHARED_REALNAME_LIB) $(inst_libdir)/$(SHARED_LINKERNAME_LIB)
+	$(LDCONFIG) -l $(inst_libdir)/$(SHARED_REALNAME_LIB)
+#	$(INSTALL) -d $(inst_includedir)/
+#	$(INSTALL) -d $(inst_includedir)/$(lib_name)
+#	$(INSTALL) -t $(inst_includedir)/$(lib_name) $(install_headers)/*.h
+	$(INSTALL) -d $(inst_mandir)/
+	$(INSTALL) -d $(inst_mandir)/man3
+	$(INSTALL) -t $(inst_mandir)/man3/ $(top_srcdir)/man/libvecpf.3.gz
+	ln -f -s libvecpf.3.gz $(inst_mandir)/man3/vecpf.3.gz
+
+.PHONY: install
+
+install-headers:
+#	$(INSTALL) -d $(inst_includedir)/
+#	$(INSTALL) -d $(inst_includedir)/$(lib_name)
+#	$(INSTALL) -t $(inst_includedir)/$(lib_name) $(install_headers)/*.h
+.PHONY: install-headers
+
+uninstall:
+#	-rm $(inst_includedir)/*.h
+	-rm $(inst_libdir)/$(SHARED_REALNAME_LIB)
+	-rm $(inst_libdir)/$(SHARED_LINKERNAME_LIB)
+	-rm $(inst_libdir)/$(SHARED_SONAME_LIB)
+ifeq ("@enable_static@","static")
+	-rm $(inst_libdir)/$(STATIC_LIBRARY)
+endif
+	rm $(inst_mandir)/man3/vecpf.3.gz
+	rm $(inst_mandir)/man3/libvecpf.3.gz
+
+
+clean:
+	rm $(top_builddir)/*
+
+.PHONY: clean

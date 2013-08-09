@@ -1,0 +1,244 @@
+===========================================================================
+
+				 Libvecpf
+	    The "Vector Printf Library" User & Developer Guide
+		    For the GNU/Linux OS and GLIBC 2.10
+		      Contributed by IBM Corporation
+		   Copyright (C) 2011-2013 IBM Corporation
+
+===========================================================================
+NOTE:Eight space tabs are the optimum editor setting for reading this file.
+===========================================================================
+
+	    Author(s) : Ryan S. Arnold <rsa@linux.vnet.ibm.com>
+			Date Created: July 12, 2011
+			Last Updated: August 09, 2013
+
+===========================================================================
+
+Table of Contents:
+
+	1.  Introduction
+	  1.1. Rationale
+	2.  License
+	3.  Supported Platforms
+	4.  Dependencies
+	  4.1  GNU/Linux OS
+	  4.2  GLIBC Minimum Version
+	5.  Configuration
+	6.  Make Rules
+	7.  Use
+	8.  Contributing
+
+	A.  History
+
+---------------------------------------------------------------------------
+1.  Introduction
+---------------------------------------------------------------------------
+1.1.  Rationale
+
+The functionality in Libvecpf was originally suggested for GLIBC but was
+rejected.  The GLIBC printf-hooks were created to enable specialized
+libraries, like this one, to register printf callback hooks for
+specialized data types.
+
+---------------------------------------------------------------------------
+2.  License
+
+Libvecpf is released under the "LGPL v2.1" License as indicated by the file
+"LICENSE".
+
+---------------------------------------------------------------------------
+3.  Supported Platforms
+
+Currently Libvecpf has only been tested on the Power Architecture POWER
+platforms to support the following Vector datatypes:
+
+  Altivec/VMX Data Types:
+
+    vector unsigned int
+    vector signed int
+    vector unsigned short
+    vector signed short
+    vector unsigned char
+    vector signed char
+    vector float
+
+  VSX Data Types:
+
+    vector double
+
+This library could be extended to provide printf support for the following
+Vector data types:
+
+  SPE Data Types:
+    (Note: SPE is mutually exclusive with Altivec/VMX and VSX):
+
+    __ev64_u16__
+    __ev64_s16__
+    __ev64_u32__
+    __ev64_s32__
+    __ev64_fs__
+    __ev64_u64__
+    __ev64_s64__
+    __ev64_opaque__
+
+  AVX Data Types
+
+    __m256
+    __m256d
+    __m256i
+
+  SSE2 Data Types
+
+    __m128
+    __m128d
+    __m128i
+
+---------------------------------------------------------------------------
+4.  Dependencies
+---------------------------------------------------------------------------
+4.1  GNU/Linux OS
+
+Only GLIBC supports the printf-hooks mechanism and therefore libvecpf is a
+GNU/Linux OS only library.
+
+---------------------------------------------------------------------------
+4.2  GLIBC Minimum Version
+
+Libvecpf version 1.0.0 relies upon a minimum GLIBC 2.10 for printf-hooks
+support.  The libvecpf configure stage will check the libc that it is
+linked against for the printf-hook support and will warn if it is not
+found.
+
+---------------------------------------------------------------------------
+5.  Configuration
+
+Libvecpf must be built in a directory that is not the base level source
+directory.
+
+Libvecpf may be built as a static library, a shared library, or both.  The
+configuration defaults to building the shared library and not building the
+static library.
+
+In order to NOT build the shared library pass the following flag:
+
+  --enable-shared=""
+
+In order to build the static library pass the following flag:
+
+  --enable-static
+
+You may also explicitly pass the 'enable' switch for both, e.g.:
+
+  CFLAGS="-m32 -g -O2" ../libvecpf/configure \
+  --build=powerpc-linux --host=powerpc-linux --enable-shared \
+  --enable-static 2>&1 | tee _configure32
+
+  CFLAGS="-m64 -g -O2" ../libvecpf/configure \
+  --build=powerpc64-linux --host=powerpc64-linux --enable-shared \
+  --enable-static 2>&1 | tee _configure32
+
+In order to enable the library to support the printing of VSX data types
+pass the --enable-vsx configuration switch:
+
+  CFLAGS="-m32 -g -O2" ../libvecpf/configure \
+  --build=powerpc-linux --host=powerpc-linux --enable-shared \
+  --enable-static --enable-vsx 2>&1 | tee _configure32
+
+  CFLAGS="-m64 -g -O2" ../libvecpf/configure \
+  --build=powerpc64-linux --host=powerpc64-linux --enable-shared \
+  --enable-static --enable-vsx 2>&1 | tee _configure32
+
+If VSX support is enabled in the library it will only be tested by the test
+suite if the build machine is VSX enabled, i.e., power7 and later
+processors.  Otherwise, it will simply be cross compiled and not executed.
+
+---------------------------------------------------------------------------
+6.  Make Rules
+
+  make all:
+    Build libvecpf-X.Y.Z.so, libvecpf.so, libvecpf.so.1, and libvecpf.a.
+
+  make check:
+    The libvecpf test suite will execute upon either/both libvecpf.so (the
+    shared library) or/and libvecpf.a (the static library) of the Vector
+    Printf Library depending on which --enable switches were passed.
+
+    It will only execute VSX data-type tests if the library has been built
+    on a system which support the VSX instruction sets (i.e. power7 and
+    later POWER processors).
+
+  make install:
+
+    Results in the installation of libvecpf-X.Y.Z.so, libvecpf.so,
+    libvecpf.so.1 into @libdir@ as specified by configure.
+
+    install_root=<new_top_level>
+
+      This causes the aforementioned libraries, applications, and header
+      files to be installed into <new_top_level>/@libdir@
+      <new_top_level>/@bindir@, <new_top_level>/@includedir@, and
+      <new_top_level>/@mandir@.
+
+  make uninstall:
+    Results in all installed files being removed.
+
+---------------------------------------------------------------------------
+7. Use
+
+Compiling an application and linking it against the static library
+libvecpf.a will expose a default feature of the link editor which purges
+unused symbols.  This will prevent the registration of the printf-hook
+callback mechanism because the link editor thinks that the library
+constructor is unused and purges it from the final link.
+
+In order to prevent the link editor from purging the libvecpf constructor
+on the final link explicitly tell it to not purge the constructor by
+passing "-Wl,-u,__libvecpf_init" as in the following example:
+
+  gcc -m32 -maltivec -O3 -g -fpic -static -Wall \
+    -o ./test_vecpf_static \
+    ../ppc64-tc-utils/trunk/libvector-printf/test_vecpf.c \
+    -I../ppc64-tc-utils/trunk/libvector-printf/include.. \
+    -I../ppc64-tc-utils/trunk/libvector-printf -I. \
+    -Wl,-u,__libvecpf_init ./libvecpf.a
+
+Using the additional printf length modifiers defined by this library in a
+program will cause the GCC compiler to complain in the following manner
+when compiled with -Wall:
+
+  warning: unknown conversion type character ‘v’ in format
+
+This warning can be supressed with -Wno-format.  Only suppress warnings
+with care.
+
+For further information on how to use the facilities provided by Libvecpf
+please read the man page, libvecpf.3.
+
+---------------------------------------------------------------------------
+8. Contributing
+
+We ask that you contribute modifications back to the community as a
+gesture of goodwill under the specifics of the LGPL v2.1 license.
+
+In order to contribute as an individual please fill out the ICLA.txt file,
+sign, date, scan, and email to the maintainer.
+
+In order to contribute as a corporate entity please fill out the CCLA.txt
+file, sign, date, scan, and email to the maintainer.
+
+Individual contributions should use the signed-off method as indicated in
+the CONTRIBUTORS file.
+
+---------------------------------------------------------------------------
+A. History
+
+ - Libvecpf was originally written and packaged by Michael Brutman
+   <brutman@us.ibm.com>
+
+ - It was updated for breadth and packaged for community consumption by
+   Ryan S. Arnold <rsa@linux.vnet.ibm.com>
+
+ - Libvecpf is currently maintained by Ryan S. Arnold
+   <rsa@linux.vnet.ibm.com>.
