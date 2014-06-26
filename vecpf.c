@@ -3,7 +3,7 @@
    Author(s): Michael Brutman <brutman@us.ibm.com>
               Ryan S. Arnold <rsa@linux.vnet.ibm.com>
 
-   Copyright (c) 2010, 2011, IBM Corporation
+   Copyright (c) 2010-2014 IBM Corporation
    All rights reserved.
 
    The Vector Printf Library is free software; you can redistribute it and/or
@@ -94,6 +94,10 @@
    alone.
 
 */
+
+/* Size of static buffer buffer to describe the vector internals.  */
+
+#define FMT_STR_MAXLEN  64
 
 /* A handle for the vector data type.  Filled in by register_printf_type
    when the library first initializes. */
@@ -252,55 +256,41 @@ vec_ais (const struct printf_info *info, size_t n, int *argtype, int *size)
    of the vector.  Using the printf_info structure and desired modifiers
    and spec char, create a format string to be used with asprintf. */
 
-static char *
-gen_fmt_str (const struct printf_info *info, const char *sz_flags_and_conv)
+static void
+gen_fmt_str (const struct printf_info *info, const char *sz_flags_and_conv,
+             char *fmt_str_buf)
 {
-
-  char * fmt_str_buf = (char *)malloc( 64 );  /* 64 is overkill. */
   int fmt_str_idx = 0;
 
   fmt_str_buf[fmt_str_idx++] = '%';
 
   if (info->alt)
-    {
-      fmt_str_buf[fmt_str_idx++] = '#';
-    }
+    fmt_str_buf[fmt_str_idx++] = '#';
   if (info->space)
-    {
-      fmt_str_buf[fmt_str_idx++] = ' ';
-    }
+    fmt_str_buf[fmt_str_idx++] = ' ';
   if (info->left)
-    {
-      fmt_str_buf[fmt_str_idx++] = '-';
-    }
+    fmt_str_buf[fmt_str_idx++] = '-';
   if (info->showsign)
-    {
-      fmt_str_buf[fmt_str_idx++] = '+';
-    }
+    fmt_str_buf[fmt_str_idx++] = '+';
   if (info->group)
-    {
-      fmt_str_buf[fmt_str_idx++] = '\'';
-    }
+    fmt_str_buf[fmt_str_idx++] = '\'';
 
-  if (!info->left && info->pad == '0') {
+  if (!info->left && info->pad == '0')
     fmt_str_buf[fmt_str_idx++] = '0';
-  }
 
   fmt_str_buf[fmt_str_idx++] = '*';
   fmt_str_buf[fmt_str_idx++] = '.';
   fmt_str_buf[fmt_str_idx++] = '*';
 
-  strcpy (fmt_str_buf+fmt_str_idx, sz_flags_and_conv);
-
-  return fmt_str_buf;
+  strncpy (fmt_str_buf + fmt_str_idx, sz_flags_and_conv,
+           FMT_STR_MAXLEN - fmt_str_idx);
 }
 
 static int
 vec_printf_d (FILE *fp, const struct printf_info *info,
               const void *const *args)
 {
-
-  char *fmt_str;
+  char fmt_str[FMT_STR_MAXLEN];
   int i;
   int limit;
 
@@ -325,52 +315,49 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
   if (table_idx == -1)
     return -2;
 
-  fmt_str = gen_fmt_str (info, int_types_table[table_idx].mod_and_spec);
+  gen_fmt_str (info, int_types_table[table_idx].mod_and_spec, fmt_str);
 
   limit = LIBVECTOR_VECTOR_WIDTH_BYTES /
           int_types_table[table_idx].element_size;
 
   for (i=0; i < limit; i++)
     {
-      char *buf;
       memcpy (&vp_u, *((void***)args)[0], sizeof( vp_u.v ));
 
       switch (int_types_table[table_idx].data_type)
       {
         case VDT_unsigned_int:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.ui[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ui[i]);
           break;
         }
         case VDT_signed_int:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.si[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.si[i]);
           break;
         }
         case VDT_unsigned_short:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.uh[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.uh[i]);
           break;
         }
         case VDT_signed_short:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.sh[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.sh[i]);
           break;
         }
         case VDT_unsigned_char:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.uc[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.uc[i]);
           break;
         }
         case VDT_signed_char:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.sc[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.sc[i]);
           break;
         }
 
       } /* end switch */
-
-      fputs (buf, fp);
 
       if ((limit > 1 ) && (i < (limit-1)))
         {
@@ -380,13 +367,7 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
             fputs (" ", fp);
           }
         }
-
-      free (buf);
-
     } /* end for */
-
-
-  free (fmt_str);
 
   return 0;
 }
@@ -395,9 +376,7 @@ static int
 vec_printf_f (FILE *fp, const struct printf_info *info,
               const void *const *args)
 {
-
-
-  char *fmt_str;
+  char fmt_str[FMT_STR_MAXLEN];
   int i;
   int limit;
 
@@ -424,38 +403,28 @@ vec_printf_f (FILE *fp, const struct printf_info *info,
     return -2;
   }
 
-
-  fmt_str = gen_fmt_str (info, fp_types_table[table_idx].mod_and_spec);
-
+  gen_fmt_str (info, fp_types_table[table_idx].mod_and_spec, fmt_str);
 
   limit = LIBVECTOR_VECTOR_WIDTH_BYTES /
           fp_types_table[table_idx].element_size;
 
   for (i=0; i < limit; i++)
     {
-
-      char *buf;
       memcpy (&vp_u, *((void***)args)[0], sizeof( vp_u.v ));
 
       switch (fp_types_table[table_idx].data_type)
       {
         case VDT_float:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.f[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.f[i]);
           break;
         }
-
-#ifdef ENABLE_VSX
         case VDT_double:
         {
-          asprintf (&buf, fmt_str, info->width, info->prec, vp_u.d[i]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.d[i]);
           break;
         }
-#endif
-
       } /* end switch */
-
-      fputs (buf, fp);
 
       if ((limit > 1 ) && (i < (limit-1)))
         {
@@ -466,16 +435,9 @@ vec_printf_f (FILE *fp, const struct printf_info *info,
             fputs (" ", fp);
           }
         }
-
-      free (buf);
-
     } /* end for */
 
-
-  free (fmt_str);
-
   return 0;
-
 }
 
 static int
