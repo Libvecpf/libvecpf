@@ -58,9 +58,7 @@
      We only support the default separator; as things are today we can't
      add flags to printf to support the other separators.
 
-#ifdef TEST_VSX
      We add a new modifier 'vv' to support vector double for VSX.
-#endif
 
    Conversion chars to test:
 
@@ -1197,7 +1195,7 @@ float_type float_tests[] =
   { 0, NULL, NULL }
 };
 
-#ifdef TEST_VSX
+#ifdef __VSX__
 typedef struct {
   int src_line;
   const char *format1;
@@ -1398,7 +1396,7 @@ gen_cmp_str (int data_type, void *vec_ptr, const char *format_str, char *out_buf
       break;
     }
 
-#ifdef TEST_VSX
+#ifdef __VSX__
     case VDT_double: {
       index += sprintf (out_buffer, format_str, u.d[0]);
       strcat (out_buffer + index, " ");
@@ -1431,10 +1429,9 @@ main (int argc, char *argv[])
   int16_type  *int16_ptr;
   float_type  *float_ptr;
   char_type   *char_ptr;
-
-  #ifdef TEST_VSX
+#ifdef __VSX__
   double_type  *double_ptr;
-  #endif
+#endif
 
   puts ("\nUnsigned 32 bit integer tests\n");
   for (uint32_ptr = uint32_tests; uint32_ptr->format1; uint32_ptr++)
@@ -1506,8 +1503,8 @@ main (int argc, char *argv[])
       test_count++;
     }
 
-  #ifdef TEST_VSX
-  puts ("\nDouble tests\n");
+#ifdef __VSX__
+  puts ("\nDouble tests (VSX)\n");
   for (double_ptr = double_tests; double_ptr->format1; double_ptr++)
     {
       vector double val = DOUBLE_TEST_VECTOR;
@@ -1516,7 +1513,7 @@ main (int argc, char *argv[])
       _COMPARE (double_ptr->src_line, expected_output, actual_output);
       test_count++;
     }
-  #endif
+#endif
 
   puts ("\nChar tests - test 'character' ouput.\n");
   for (char_ptr = char_tests; char_ptr->format1; char_ptr++)

@@ -139,20 +139,9 @@ You may also explicitly pass the 'enable' switch for both, e.g.:
   --build=powerpc64-linux --host=powerpc64-linux --enable-shared \
   --enable-static 2>&1 | tee _configure32
 
-In order to enable the library to support the printing of VSX data types
-pass the --enable-vsx configuration switch:
-
-  CFLAGS="-m32 -g -O2" ../libvecpf/configure \
-  --build=powerpc-linux --host=powerpc-linux --enable-shared \
-  --enable-static --enable-vsx 2>&1 | tee _configure32
-
-  CFLAGS="-m64 -g -O2" ../libvecpf/configure \
-  --build=powerpc64-linux --host=powerpc64-linux --enable-shared \
-  --enable-static --enable-vsx 2>&1 | tee _configure32
-
-If VSX support is enabled in the library it will only be tested by the test
-suite if the build machine is VSX enabled, i.e., power7 and later
-processors.  Otherwise, it will simply be cross compiled and not executed.
+The library also support VSX 'vector double', which is enabled by default.
+However, tests will be only run by make check if compiler defines __VSX__
+(which is a builtin for -mcpu=power7 or -mvsx).
 
 ---------------------------------------------------------------------------
 6.  Make Rules

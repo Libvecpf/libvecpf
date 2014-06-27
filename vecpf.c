@@ -95,6 +95,7 @@
 
 */
 
+
 /* Size of static buffer buffer to describe the vector internals.  */
 
 #define FMT_STR_MAXLEN  64
@@ -121,12 +122,10 @@ static vector_modifier_t vector_mods[] =
   {-1, L"hv" },  /* Vector of halfwords (alias for vh).  */
   {-1, L"v"  },  /* Vector of char or single precision floats.  */
 
-#ifdef ENABLE_VSX
   {-1, L"vv" },  /* Vector of double precision floats.  */
-#endif
-
-  {0, 0 }
 };
+static const int vector_mods_len = sizeof (vector_mods) /
+				   sizeof (vector_mods[0]);
 
 /* Master tables of valid specifiers and modifiers and how to handle them.
    We have one table for integer conversions and one table for floating
@@ -156,7 +155,7 @@ typedef struct
 /* The entries for VDT_signed_int, VDT_signed_short, VDT_unsigned_int, and
  * VDT_unsigned_short are duplicated due to the aliases, 'lv' -> 'vl' and 'hv'
  * -> 'vh'.  */
-static vector_types_rec_t int_types_table[] =
+static const vector_types_rec_t int_types_table[] =
 {
 
   {L'd', 0, "d",   4, VDT_signed_int},
@@ -196,11 +195,11 @@ static vector_types_rec_t int_types_table[] =
   {L'X', 4, "hhX", 1, VDT_unsigned_char},
 
   {L'c', 4, "c", 1, VDT_unsigned_char},
-
-  { 0, 0, 0, 0, 0 }
 };
+static const int int_types_table_len = sizeof (int_types_table) /
+				       sizeof (int_types_table[0]);
 
-static vector_types_rec_t fp_types_table[] =
+static const vector_types_rec_t fp_types_table[] =
 {
   {L'f', 4, "f", 4, VDT_float},
   {L'e', 4, "e", 4, VDT_float},
@@ -210,7 +209,6 @@ static vector_types_rec_t fp_types_table[] =
   {L'a', 4, "a", 4, VDT_float},
   {L'A', 4, "A", 4, VDT_float},
 
-#ifdef ENABLE_VSX
   {L'f', 5, "f", 8, VDT_double},
   {L'e', 5, "e", 8, VDT_double},
   {L'E', 5, "E", 8, VDT_double},
@@ -218,10 +216,9 @@ static vector_types_rec_t fp_types_table[] =
   {L'G', 5, "G", 8, VDT_double},
   {L'a', 5, "a", 8, VDT_double},
   {L'A', 5, "A", 8, VDT_double},
-#endif
-
-  { 0, 0, 0, 0, 0 }
 };
+static const int fp_types_table_len = sizeof (fp_types_table) /
+				      sizeof (fp_types_table[0]);
 
 /* Variable argument handler registered with register_printf_type */
 static void
@@ -235,10 +232,8 @@ vec_va (void *mem, va_list *ap)
 static int
 vec_ais (const struct printf_info *info, size_t n, int *argtype, int *size)
 {
-  int i = 0;
-
-  /* Safe, since the last element of vector_mods is zero.  */
-  while (vector_mods[i].bits)
+  int i;
+  for (i=0; i<vector_mods_len; ++i)
     {
       /* Only return '1' if we're supposed to be handling this data type.  */
       if ((info->user & vector_mods[i].bits))
@@ -247,14 +242,10 @@ vec_ais (const struct printf_info *info, size_t n, int *argtype, int *size)
 	  size[0] = sizeof (vector unsigned int);
 	  return 1;
 	}
-      i++;
     }
   return -1;
 }
 
-/* Printing a vector will be done by calling asprintf for each element
-   of the vector.  Using the printf_info structure and desired modifiers
-   and spec char, create a format string to be used with asprintf. */
 
 static void
 gen_fmt_str (const struct printf_info *info, const char *sz_flags_and_conv,
@@ -298,9 +289,9 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
 
   /* Find entry in table. */
   int table_idx = -1;
-  int j = 0;
+  int j;
 
-  while (int_types_table[j].spec)
+  for (j=0; j<int_types_table_len; ++j)
     {
       if ((info->spec == int_types_table[j].spec)
            && (info->user & vector_mods[int_types_table[j].bits_index].bits))
@@ -308,8 +299,6 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
         table_idx = j;
         break;
       }
-
-      j++;
     }
 
   if (table_idx == -1)
@@ -384,9 +373,9 @@ vec_printf_f (FILE *fp, const struct printf_info *info,
 
   /* Find entry in table. */
   int table_idx = -1;
-  int j=0;
+  int j;
 
-  while (fp_types_table[j].spec)
+  for (j=0; j<fp_types_table_len; ++j)
     {
       if ((info->spec == fp_types_table[j].spec)
            && (info->user & vector_mods[fp_types_table[j].bits_index].bits))
@@ -394,8 +383,6 @@ vec_printf_f (FILE *fp, const struct printf_info *info,
         table_idx = j;
         break;
       }
-
-      j++;
     }
 
   if (table_idx == -1) {

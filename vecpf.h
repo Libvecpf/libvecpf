@@ -36,10 +36,7 @@
 #define VDT_unsigned_char    (4)
 #define VDT_signed_char      (5)
 #define VDT_float            (6)
-
-#ifdef ENABLE_VSX
 #define VDT_double           (7)
-#endif
 
 /* Union used to pick elements of a particular type from a vector.  */
 
@@ -53,9 +50,7 @@ typedef union
   unsigned char      uc[16];
   signed char        sc[16];
   float                f[4];
-#ifdef ENABLE_VSX
   double               d[2];
-#endif
 } vp_u_t;
 
 #endif /* _VECPF_H  */

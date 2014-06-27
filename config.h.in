@@ -1,8 +1,5 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Enable VSX */
-#undef ENABLE_VSX
-
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 

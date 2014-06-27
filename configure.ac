@@ -11,41 +11,6 @@ if test "`cd $srcdir; /bin/pwd`" = "`/bin/pwd`"; then
         AC_MSG_ERROR([you must configure in a separate build directory])
 fi
 
-AC_ARG_ENABLE([vsx],
-              AS_HELP_STRING([--enable-vsx],
-                             [build with vsx support]),
-[if test "$enableval" = yes; then
-  AC_DEFINE([ENABLE_VSX], , [Enable VSX])
-  AC_MSG_NOTICE(enabling support for VSX data types.)
-  vsx="-mcpu=power7"
-
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -maltivec"
-
- # Check if the VSX instruction set works on this machine.  It will
- # determine whether we're cross-compiling and whether the test-suite
- # executes the VSX portions of the test.
-  AC_CACHE_CHECK(for VSX instruction support,libvecpf_cv_native_vsx,
-		[AC_RUN_IFELSE(AC_LANG_PROGRAM([[#include <altivec.h>]],
-				[[__asm__ __volatile__("xsmaddadp 32, 32, 33" ::: "memory","cc");]]),
-				libvecpf_cv_native_vsx=yes,
-				libvecpf_cv_native_vsx=no,)])
-  CFLAGS="$saved_CFLAGS"
-
-  if test x$libvecpf_cv_native_vsx == xno; then
-    AC_MSG_WARN([You have enabled VSX support but this machine does
-		 not support the VSX instruction set.  VSX tests will not be
-		 executed if you run the test suite.])
-  else
-    AC_MSG_NOTICE(The test suite will execute the VSX tests if run.)
-  fi
-fi
-])
-
-AC_SUBST(vsx)
-# Use this to determine whether to run VSX tests in the test-suite.
-AC_SUBST(libvecpf_cv_native_vsx)
-
 AC_ARG_ENABLE([shared],
               AS_HELP_STRING([--enable-shared],
                              [build shared library @<:@default@:>@]),
@@ -141,7 +106,6 @@ AC_USE_SYSTEM_EXTENSIONS
 
 AC_CHECK_HEADER(printf.h)
 AC_CHECK_HEADER(altivec.h)
-AC_CHECK_FUNCS(asprintf)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
