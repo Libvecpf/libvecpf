@@ -177,6 +177,6 @@ endif
 
 
 clean:
-	rm $(top_builddir)/*
+	rm -f $(top_builddir)/*.so $(top_builddir)/*.o
 
 .PHONY: clean
