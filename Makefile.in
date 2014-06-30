@@ -13,9 +13,6 @@ sysheaders=@sysheaders@
 exec_prefix=@exec_prefix@
 prefix=@prefix@
 
-# Use this to determine whether to run VSX tests in the test-suite.
-native_vsx=@libvecpf_cv_native_vsx@
-
 # Install the header files here.
 ifndef includedir
 includedir = $(prefix)/include
@@ -75,15 +72,8 @@ else
 	@echo
 endif
 
-# Only test the VSX code if the build system natively supports the VSX
-# instruction set.  This was tested for in the configure script.
-test_vsx=
-ifeq ($(native_vsx),yes)
-	test_vsx=@vsx@ -DTEST_VSX
-endif
-
 $(top_builddir)/test_vecpf_shared: shared
-	@CC@ $(ALL_FLAGS) -Wall -o $(top_builddir)/test_vecpf_shared $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(test_vsx) $(top_builddir)/$(SHARED_LINKERNAME_LIB)
+	@CC@ $(ALL_FLAGS) -Wall -o $(top_builddir)/test_vecpf_shared $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(top_builddir)/$(SHARED_LINKERNAME_LIB)
 
 $(top_builddir)/test_vecpf_static: static
 	@CC@ $(ALL_FLAGS) -static -Wall -o $(top_builddir)/test_vecpf_static $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(test_vsx) -Wl,-u,__libvecpf_init $(top_builddir)/$(STATIC_LIBRARY)
