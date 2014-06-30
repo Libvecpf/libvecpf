@@ -73,10 +73,10 @@ else
 endif
 
 $(top_builddir)/test_vecpf_shared: shared
-	@CC@ $(ALL_FLAGS) -Wall -o $(top_builddir)/test_vecpf_shared $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(top_builddir)/$(SHARED_LINKERNAME_LIB)
+	@CC@ $(ALL_FLAGS) -Wall -o $(top_builddir)/test_vecpf_shared $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) -L$(top_builddir) -Wl,--no-as-needed -lvecpf
 
 $(top_builddir)/test_vecpf_static: static
-	@CC@ $(ALL_FLAGS) -static -Wall -o $(top_builddir)/test_vecpf_static $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) $(test_vsx) -Wl,-u,__libvecpf_init $(top_builddir)/$(STATIC_LIBRARY)
+	@CC@ $(ALL_FLAGS) -static -Wall -o $(top_builddir)/test_vecpf_static $(top_srcdir)/test_vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir) -Wl,-u,__libvecpf_init $(top_builddir)/$(STATIC_LIBRARY)
 
 check_targets :=
 ifeq (@enable_shared@,shared)
@@ -167,6 +167,6 @@ endif
 
 
 clean:
-	rm -f $(top_builddir)/*.so $(top_builddir)/*.o
+	rm -f $(top_builddir)/*.so* $(top_builddir)/*.o
 
 .PHONY: clean

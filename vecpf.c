@@ -386,7 +386,6 @@ vec_printf_f (FILE *fp, const struct printf_info *info,
     }
 
   if (table_idx == -1) {
-    printf("meep.\n");
     return -2;
   }
 
@@ -443,12 +442,10 @@ __register_printf_vec( void )
 
   /* Register our modifiers */
 
-  i = 0;
-  while (vector_mods[i].bits)
+  for (i=0; i<vector_mods_len; ++i)
     {
       vector_mods[i].bits
 	= register_printf_modifier (vector_mods[i].modifier_string);
-      i++;
     }
 
 
