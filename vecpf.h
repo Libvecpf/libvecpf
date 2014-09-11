@@ -37,6 +37,9 @@
 #define VDT_signed_char      (5)
 #define VDT_float            (6)
 #define VDT_double           (7)
+#ifdef HAVE_INT128_T
+#define VDT_int128           (8)
+#endif
 
 /* Union used to pick elements of a particular type from a vector.  */
 
@@ -51,6 +54,9 @@ typedef union
   signed char        sc[16];
   float                f[4];
   double               d[2];
+#ifdef HAVE_INT128_T
+  vector __int128_t	i;
+#endif
 } vp_u_t;
 
 #endif /* _VECPF_H  */

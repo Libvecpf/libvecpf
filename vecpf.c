@@ -121,8 +121,11 @@ static vector_modifier_t vector_mods[] =
   {-1, L"vh" },  /* Vector of halfwords.  */
   {-1, L"hv" },  /* Vector of halfwords (alias for vh).  */
   {-1, L"v"  },  /* Vector of char or single precision floats.  */
-
   {-1, L"vv" },  /* Vector of double precision floats.  */
+#ifdef HAVE_INT128_T
+  {-1, L"vz" },  /* Vector of quadword */
+  {-1, L"zv" },  /* Vector of quadword */
+#endif
 };
 static const int vector_mods_len = sizeof (vector_mods) /
 				   sizeof (vector_mods[0]);
@@ -195,6 +198,22 @@ static const vector_types_rec_t int_types_table[] =
   {L'X', 4, "hhX", 1, VDT_unsigned_char},
 
   {L'c', 4, "c", 1, VDT_unsigned_char},
+#ifdef HAVE_INT128_T
+  {L'x', 6, "lx", 16, VDT_int128},
+  {L'X', 6, "lX", 16, VDT_int128},
+  {L'd', 6, "ld", 16, VDT_int128},
+  {L'i', 6, "li", 16, VDT_int128},
+  {L'u', 6, "lu", 16, VDT_int128},
+  {L'o', 6, "lo", 16, VDT_int128},
+
+  {L'x', 7, "lx", 16, VDT_int128},
+  {L'X', 7, "lX", 16, VDT_int128},
+  {L'd', 7, "ld", 16, VDT_int128},
+  {L'i', 7, "li", 16, VDT_int128},
+  {L'u', 7, "lu", 16, VDT_int128},
+  {L'o', 7, "lo", 16, VDT_int128},
+#endif
+
 };
 static const int int_types_table_len = sizeof (int_types_table) /
 				       sizeof (int_types_table[0]);
@@ -315,6 +334,14 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
 
       switch (int_types_table[table_idx].data_type)
       {
+#ifdef HAVE_INT128_T
+        case VDT_int128:
+        {
+          fprintf (fp, fmt_str, info->width, info->prec, (vp_u.i));
+          fprintf (fp, fmt_str, info->width, info->prec, (vp_u.i)<<64);
+          break;
+        }
+#endif
         case VDT_unsigned_int:
         {
           fprintf (fp, fmt_str, info->width, info->prec, vp_u.ui[i]);
@@ -445,7 +472,7 @@ __register_printf_vec( void )
   for (i=0; i<vector_mods_len; ++i)
     {
       vector_mods[i].bits
-	= register_printf_modifier (vector_mods[i].modifier_string);
+       = register_printf_modifier (vector_mods[i].modifier_string);
     }
 
 

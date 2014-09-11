@@ -1306,6 +1306,29 @@ char_type signed_char_tests[] =
   { 0, NULL, NULL }
 };
 
+#ifdef HAVE_INT128_T
+
+typedef struct {
+  int src_line;
+  const char *format1;
+  const char *format2;
+  const char *format3;
+} int128_type;
+
+#define INT128_TEST_VECTOR  (vector __int128_t) { ((((__int128_t)-0x0123456789abcdefUL << 64)) + ((__int128_t)0xfedcba9876543210UL))}
+
+int128_type int128_tests[] =
+{
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%lx",  "%vzx", "%zvx" },
+  { __LINE__, "%ld",  "%vzd", "%zvd" },
+  { __LINE__, "%lu",  "%vzu", "%zvu" },
+  { __LINE__, "%li",  "%vzi", "%zvi" },
+  { __LINE__, "%lX",  "%vzX", "%zvX" },
+  { __LINE__, "%lo",  "%vzo", "%zvo" },
+  { 0, NULL, NULL, NULL }
+};
+#endif
 void
 gen_cmp_str (int data_type, void *vec_ptr, const char *format_str, char *out_buffer, int out_buffer_len)
 {
@@ -1329,7 +1352,14 @@ gen_cmp_str (int data_type, void *vec_ptr, const char *format_str, char *out_buf
       sprintf (out_buffer + index, format_str, u.ui[3]);
       break;
     }
-
+#ifdef HAVE_INT128_T
+    case VDT_int128: {
+       index += sprintf (out_buffer, format_str, u.i);
+       sprintf (out_buffer + index, format_str, (u.i)<<64);
+printf("%s\n",out_buffer);
+       break;
+    }
+#endif
     case VDT_signed_int: {
       for (i = 0; i < 3; i++) {
         index += sprintf (out_buffer + index, format_str, u.si[i]);
@@ -1431,6 +1461,25 @@ main (int argc, char *argv[])
   char_type   *char_ptr;
 #ifdef __VSX__
   double_type  *double_ptr;
+#endif
+#ifdef HAVE_INT128_T
+
+  int128_type *int128_ptr;
+
+  puts ("\nint128 tests\n");
+  for (int128_ptr = int128_tests; int128_ptr->format1; int128_ptr++)
+    {
+      vector __int128_t val = INT128_TEST_VECTOR;
+      gen_cmp_str (VDT_int128, &val, int128_ptr->format1, expected_output, 1024);
+      sprintf (actual_output, int128_ptr->format2, val);
+      _COMPARE (int128_ptr->src_line, expected_output, actual_output);
+      test_count++;
+      if (int128_ptr->format3) {
+        sprintf (actual_output, int128_ptr->format3, val);
+        _COMPARE (int128_ptr->src_line, expected_output, actual_output);
+        test_count++;
+      }
+    }
 #endif
 
   puts ("\nUnsigned 32 bit integer tests\n");

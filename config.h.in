@@ -1,7 +1,7 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the `asprintf' function. */
-#undef HAVE_ASPRINTF
+/* "Have vector __int128_t type" */
+#undef HAVE_INT128_T
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
