@@ -1356,7 +1356,6 @@ gen_cmp_str (int data_type, void *vec_ptr, const char *format_str, char *out_buf
     case VDT_int128: {
        index += sprintf (out_buffer, format_str, u.i);
        sprintf (out_buffer + index, format_str, (u.i)<<64);
-printf("%s\n",out_buffer);
        break;
     }
 #endif
