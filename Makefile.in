@@ -64,7 +64,7 @@ static:  $(top_builddir)/$(STATIC_LIBRARY)
 
 #$(top_builddir)/vecpf.o: $(top_srcdir)/vecpf.c $(install_headers)/vecpf.h
 $(top_builddir)/vecpf.o: $(top_srcdir)/vecpf.c
-ifeq ($(sysheaders), ”)
+ifeq ($(sysheaders), )
 	@CC@ $(ALL_FLAGS) -Wall -fpic -c -o $(top_builddir)/vecpf.o $(top_srcdir)/vecpf.c -I$(install_headers) -I$(top_srcdir) -I$(top_builddir)
 	@echo
 else
@@ -116,7 +116,7 @@ $(top_builddir)/$(SHARED_SONAME_LIB): $(top_builddir)/$(SHARED_REALNAME_LIB)
 # This is the 'realname' shared object, i.e. the actual libvecpf binary file.
 $(top_builddir)/$(SHARED_REALNAME_LIB): $(top_builddir)/vecpf.o
 	@echo +Linking relocatable object files into $@.
-ifeq ($(sysheaders), ”)
+ifeq ($(sysheaders), )
 	@CC@ $(ALL_FLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o  -I$(top_srcdir)
 	@echo
 else
