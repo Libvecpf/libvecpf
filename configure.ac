@@ -6,11 +6,6 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_USE_SYSTEM_EXTENSIONS([_GNU_SOURCE])
 
-# We want to prevent building/configuration in the source directory.
-if test "`cd $srcdir; /bin/pwd`" = "`/bin/pwd`"; then
-        AC_MSG_ERROR([you must configure in a separate build directory])
-fi
-
 AC_ARG_ENABLE([shared],
               AS_HELP_STRING([--enable-shared],
                              [build shared library @<:@default@:>@]),
