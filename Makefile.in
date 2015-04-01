@@ -168,5 +168,14 @@ endif
 
 clean:
 	rm -f $(top_builddir)/*.so* $(top_builddir)/*.o
+	rm -f $(top_builddir)/test_vecpf_shared
 
 .PHONY: clean
+
+distclean:
+	rm -f $(top_builddir)/config.status
+	rm -f $(top_builddir)/config.log
+	rm -f $(top_builddir)/config.h
+	rm -f $(top_builddir)/Makefile
+
+.PHONY: distclean
