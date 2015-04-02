@@ -12,6 +12,7 @@ mandir=@mandir@
 sysheaders=@sysheaders@
 exec_prefix=@exec_prefix@
 prefix=@prefix@
+install_root=${DESTDIR}
 
 # Install the header files here.
 ifndef includedir
