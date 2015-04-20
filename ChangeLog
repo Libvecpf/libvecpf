@@ -1,1 +1,5 @@
+2015-04-20 Rajalakshmi Srinivasaraghavan <raji@linux.vnet.ibm.com>
+
+        * Makefile.in: Remove ldconfig.
+
 2011-07-12  Ryan S. Arnold  <rsa@linux.vnet.ibm.com>

@@ -49,7 +49,6 @@ SHARED_LINKERNAME_LIB = lib@PACKAGE_NAME@.so
 
 RANLIB = @RANLIB@
 
-LDCONFIG = /sbin/ldconfig
 INSTALL = install
 
 install_headers=$(top_srcdir)/include
@@ -110,8 +109,8 @@ $(top_builddir)/$(SHARED_LINKERNAME_LIB): $(top_builddir)/$(SHARED_REALNAME_LIB)
 # The $(SHARED_SONAME_LIB) -> $(SHARED_REALNAME_LIB) symlink is supposed to
 # be created by ldconfig be reading the `soname' from the SHARED_REALNAME_LIB.
 $(top_builddir)/$(SHARED_SONAME_LIB): $(top_builddir)/$(SHARED_REALNAME_LIB)
-	@echo "+Running ldconfig to create the library compat symlink $(notdir $@) -> $(notdir $?)"
-	$(LDCONFIG) -l $(notdir $?)
+	@echo "+Create the library compat symlink $(notdir $@) -> $(notdir $?)"
+	ln -f -s $(notdir $<) $@
 	@echo
 
 # This is the 'realname' shared object, i.e. the actual libvecpf binary file.
@@ -138,7 +137,7 @@ ifeq ("@enable_static@","static")
 endif
 	$(INSTALL) -t $(inst_libdir) $(top_builddir)/$(SHARED_REALNAME_LIB)
 	ln -f -s $(SHARED_REALNAME_LIB) $(inst_libdir)/$(SHARED_LINKERNAME_LIB)
-	$(LDCONFIG) -l $(inst_libdir)/$(SHARED_REALNAME_LIB)
+	ln -f -s $(SHARED_REALNAME_LIB) $(inst_libdir)/$(SHARED_SONAME_LIB)
 #	$(INSTALL) -d $(inst_includedir)/
 #	$(INSTALL) -d $(inst_includedir)/$(lib_name)
 #	$(INSTALL) -t $(inst_includedir)/$(lib_name) $(install_headers)/*.h
