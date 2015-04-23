@@ -75,8 +75,6 @@ have_glibc_2_10=yes
 
 # Check for vector __int128_t compiler support
 AC_CACHE_CHECK(for __int128_t, libvecpf_cv_int128_t,
- old_CFLAGS="$CFLAGS"
- CFLAGS="$CFLAGS -mcpu=power8"
  AC_TRY_COMPILE([ ], [
  vector __int128_t u = {0};
  return 0;
@@ -85,7 +83,6 @@ AC_CACHE_CHECK(for __int128_t, libvecpf_cv_int128_t,
  ], [
  libvecpf_cv_int128_t=no
  ])
- CFLAGS="$old_CFLAGS"
 )
 if test x$libvecpf_cv_int128_t = xyes; then
  AC_DEFINE_UNQUOTED([HAVE_INT128_T], [1], ["Have vector __int128_t type"])
@@ -114,10 +111,6 @@ fi
 picflag="-fpic"
 AC_MSG_NOTICE(configuring with "$picflag")
 AC_SUBST(picflag)
-
-if test x$libvecpf_cv_int128_t = xyes; then
-CFLAGS="$CFLAGS -mcpu=power8"
-fi
 
 # Checks for programs.
 AC_PROG_CC

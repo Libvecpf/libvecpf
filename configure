@@ -3394,9 +3394,7 @@ $as_echo_n "checking for __int128_t... " >&6; }
 if ${libvecpf_cv_int128_t+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  old_CFLAGS="$CFLAGS"
- CFLAGS="$CFLAGS -mcpu=power8"
- cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -3420,7 +3418,6 @@ else
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
- CFLAGS="$old_CFLAGS"
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $libvecpf_cv_int128_t" >&5
@@ -3482,10 +3479,6 @@ picflag="-fpic"
 { $as_echo "$as_me:${as_lineno-$LINENO}: configuring with \"$picflag\"" >&5
 $as_echo "$as_me: configuring with \"$picflag\"" >&6;}
 
-
-if test x$libvecpf_cv_int128_t = xyes; then
-CFLAGS="$CFLAGS -mcpu=power8"
-fi
 
 # Checks for programs.
 ac_ext=c
