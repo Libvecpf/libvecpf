@@ -6,11 +6,6 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_USE_SYSTEM_EXTENSIONS([_GNU_SOURCE])
 
-# We want to prevent building/configuration in the source directory.
-if test "`cd $srcdir; /bin/pwd`" = "`/bin/pwd`"; then
-        AC_MSG_ERROR([you must configure in a separate build directory])
-fi
-
 AC_ARG_ENABLE([shared],
               AS_HELP_STRING([--enable-shared],
                              [build shared library @<:@default@:>@]),
@@ -48,7 +43,7 @@ AC_SUBST(enable_static)
 
 AC_SUBST(sysheaders, [])
 AC_ARG_WITH([headers], AC_HELP_STRING([--with-headers=PATH], [location of system headers to use (for example /usr/src/linux/include)
-        @<:@default=compiler default@:>@]), [sysheaders=$withval], [sysheaders=”])
+        @<:@default=compiler default@:>@]), [sysheaders=$withval], [sysheaders=])
 
 # Check for GLIBC 2.10 headers
 have_glibc_2_10_headers=yes

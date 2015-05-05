@@ -3286,11 +3286,6 @@ $as_echo "$ac_cv_safe_to_define___extensions__" >&6; }
 
 
 
-# We want to prevent building/configuration in the source directory.
-if test "`cd $srcdir; /bin/pwd`" = "`/bin/pwd`"; then
-        as_fn_error $? "you must configure in a separate build directory" "$LINENO" 5
-fi
-
 # Check whether --enable-shared was given.
 if test "${enable_shared+set}" = set; then :
   enableval=$enable_shared; case "$enableval" in
@@ -3342,7 +3337,7 @@ fi
 if test "${with_headers+set}" = set; then :
   withval=$with_headers; sysheaders=$withval
 else
-  sysheaders=”
+  sysheaders=
 fi
 
 
