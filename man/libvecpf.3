@@ -1,0 +1,458 @@
+'\" r
+.\" Copyright (c) 1999 Andries Brouwer (aeb@cwi.nl)
+.\" Copyright (c) 2011, IBM Corporation
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 2 of
+.\" the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 59 Temple Place, Suite 330,
+.\" Boston, MA 02111, USA.
+.\"
+.\" This man page was created based upon the printf.3 man page by
+.\" Andries Brouwer.
+.\"
+.\" This man page was written by Ryan S. Arnold <rsa@us.ibm.com>.
+.\"
+.TH LIBVECPF 3  2011-07-12 "GNU" "Linux Programmer's Manual"
+.SH NAME
+libvecpf - The Vector Printf Library
+.SH SYNOPSIS
+.B #include <stdio.h>
+.sp
+.BI "int printf(const char *" format ", ...);"
+.br
+.BI "int fprintf(FILE *" stream ", const char *" format ", ...);"
+.br
+.BI "int sprintf(char *" str ", const char *" format ", ...);"
+.br
+.BI "int snprintf(char *" str ", size_t " size ", const char *" format ", ...);"
+.sp
+.SH DESCRIPTION
+This library extends the
+.BR printf ()
+function, via a printf-hooks callback mechanism in GLIBC, so that it may
+format Vector data types for display.
+.SS "Additional length modifiers under Altivec/VMX"
+The following additional length modifiers are supported on platforms that have
+the Altivec/VMX (Power ISA 2.01 with Vector extensions).  Since the VSX facility is predicated on VMX support these
+additional length modifiers are also supported on platforms that have the VSX
+facility.  In this section the term, `integer conversion' stands for the
+.BR d ,
+.BR i ,
+.BR o ,
+.BR u ,
+.BR x ,
+.BR X ,
+and
+.B c
+conversions.  The term, `floating point conversion' stands for the
+.BR f ,
+.BR F ,
+.BR e ,
+.BR E ,
+.BR g ,
+.BR G ,
+.BR a ,
+and
+.B A
+conversions.
+.TP
+.B vl, lv
+(vee-ell,ell-vee) A following integer conversion corresponds to a 16 byte
+vector composed of four
+.I vector unsigned
+.IR int s
+or
+.I vector signed
+.IR int s.
+.TP
+.B vh, hv
+A following integer conversions correponds to a 16 byte vector composed of eight
+.I vector unsigned
+.IR short s
+or
+.I vector signed
+.IR short s.
+.TP
+.B v
+A following integer conversion corresponds to a 16 byte vector composed of sixteen
+.I vector unsigned
+.IR char s
+or
+.I vector signed
+.IR char s.
+A following floating point conversion corresponds to a 16 byte vector composed
+of four
+.I vector float
+single-precision floating point values.
+.SS "Additional length modifiers under VSX (Power ISA 2.06)"
+The following additional length modifiers are
+.B ONLY
+supported on platforms that have the VSX facility.  In this section the term, `floating point conversion' stands for the
+.BR f ,
+.BR F ,
+.BR e ,
+.BR E ,
+.BR g ,
+.BR G ,
+.BR a ,
+and
+.B A
+conversions.
+.TP
+.B vv
+(vee-vee) A following floating point conversion corresponds to a 16 byte vector composed
+of two
+.I vector double
+double-precision floating point values.
+.SS "conversion specifiers"
+The following integer printf conversion specifiers are supported by libvecpf:
+
+.in +0.5i
+.BR d ,
+.BR i ,
+.BR o ,
+.BR u ,
+.BR x ,
+.BR X ,
+.BR c
+.in  -0.5i
+
+The following floating point printf conversion specifiers are supported by libvecpf:
+
+.in +0.5i
+.BR f ,
+.BR F ,
+.BR e ,
+.BR E ,
+.BR g ,
+.BR G ,
+.BR a ,
+.BR A
+.in  -0.5i
+.SS "valid simple format strings under AltiVec/VMX"
+.TP
+.B %vld, %lvd
+Output a vector of four
+.I signed
+.IR int s
+in signed decimal notation.
+.TP
+.B %vli, %lvi
+Same as
+.B %vld
+and
+.BR %lvd .
+.TP
+.B %vlu, %lvu
+Output a vector of four
+.I unsigned
+.IR int s
+in unsigned decimal notation.
+.TP
+.B %vlo, %lvo
+Output a vector of four
+.I unsigned
+.IR int s
+in unsigned octal notation.
+.TP
+.B %vlx, %lvx
+Output a vector of four
+.I unsigned
+.IR int s
+in unsigned hexidecimal
+.RB ( x )
+notation where the letters 
+.B abcdef
+are used.
+.TP
+.B %vlX, %lvX
+Output a vector of four
+.I unsigned
+.IR int s
+in unsigned hexidecimal
+.RB ( X )
+notation where the letters 
+.B ABCDEF
+are used.
+.TP
+.B %vhd, %hvd
+Output a vector of eight
+.I signed
+.IR short s
+in signed decimal notation.
+.TP
+.B %vhi, %hvi
+Same as
+.B %vhd
+and
+.BR %hvd .
+.TP
+.B %vhu,%hvu
+Output a vector of eight
+.I unsigned
+.IR short s
+in unsigned decimal notation.
+.TP
+.B %vho, %hvo
+Output a vector of eight
+.I unsigned
+.IR short s
+in unsigned octal notation.
+.TP
+.B %vhx, %hvx
+Output a vector of eight
+.I unsigned
+.IR short s
+in unsigned hexidecimal
+.B 'x'
+notation where the letters 
+.B abcdef
+are used.
+.TP
+.B %vhX, %hvX
+Output a vector of eight
+.I unsigned
+.IR short s
+in unsigned hexidecimal
+.RB ( X )
+notation where the letters 
+.B ABCDEF
+are used.
+.TP
+.B %vd
+Output a vector of sixteen
+.I signed
+.IR char s
+in signed decimal notation.
+.TP
+.B %vi
+Same as
+.BR %vd .
+.TP
+.B %vu
+Output a vector of sixteen
+.I unsigned
+.IR char s
+in unsigned decimal notation.
+.TP
+.B %vo
+Output a vector of sixteen
+.I unsigned
+.IR char s
+in unsigned octal notation.
+.TP
+.B %vx
+Output a vector of sixteen
+.I unsigned
+.IR char s
+in unsigned hexidecimal
+.B 'x'
+notation where the letters 
+.B abcdef
+are used.
+.TP
+.B %vX
+Output a vector of sixteen
+.I unsigned
+.IR char s
+in unsigned hexidecimal
+.RB ( X )
+notation where the letters 
+.B ABCDEF
+are used.
+.TP
+.B %vc
+Output a vector of sixteen
+.I unsigned
+.IR char s
+as characters.
+.TP
+.B %ve, %vE
+Output a vector of four
+single-precision
+.IR float s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B e
+and
+.B E
+specifiers, respectively.
+.TP
+.B %vf, %vF
+Output a vector of four
+single-precision
+.IR float s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B f
+and
+.B F
+specifiers, respectively.
+.TP
+.B %vg, %vG
+Output a vector of four
+single-precision
+.IR float s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B g
+and
+.B G
+specifiers, respectively.
+.TP
+.B %va, %vA
+Output a vector of four
+single-precision
+.IR float s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B a
+and
+.B A
+specifiers, respectively.
+.SS "valid simple format strings under VSX"
+.TP
+.B %vve, %vvE
+Output a vector of two
+double-precision
+.IR double s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B e
+and
+.B E
+specifiers, respectively.
+.TP
+.B %vvf, %vvF
+Output a vector of two
+double-precision
+.IR double s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B f
+and
+.B F
+specifiers, respectively.
+.TP
+.B %vvg, %vvG
+Output a vector of two
+double-precision
+.IR double s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B g
+and
+.B G
+specifiers, respectively.
+.TP
+.B %vva, %vvA
+Output a vector of two
+double-precision
+.IR double s
+in the manner indicated in
+.B man printf(3)
+in
+.B The conversion specifier
+section, under the
+.B a
+and
+.B A
+specifiers, respectively.
+.SH CODE EXAMPLES
+.nf
+#include <stdio.h>
+#include <altivec.h>
+
+int main() {
+  vector double d = { -1111.12304912348f, 4567.987654f };
+
+  printf("%16.16vvf\n", d);
+
+  return 0;
+}
+.fi
+.SS Warnings
+Using the additional printf length modifiers defined by this library in a program will cause the GCC compiler to complain in the following manner when compiled with -Wall:
+
+.in +0.5i
+.B warning: unknown conversion type character ‘v’ in format
+.in -0.5i
+
+This warning can be supressed with the 
+.B -Wno-format
+compiler switch.  Only suppress warnings with care.
+.SH LINKING EXAMPLES
+.SS "dynamic linking"
+.nf
+"gcc \-maltivec \-O3 \%m32 \-g \-Wall \-o foo foo.c \-mcpu=power7 \-lvecpf \-Wno\-format"
+.fi
+.SS "static linking"
+Compiling an application and linking it against the static library libvecpf.a will expose a default feature of the link editor (ld) which purges unused symbols.  The link editor sees constructors as unused in this context and purges them from the final archive.  This will prevent the registration of the printf-hook callback mechanism and
+.B printf
+will not support Vector data types.
+
+In order to prevent the link editor from purging the libvecpf constructor on the final link of a static linking operation explicitly tell it to not purge the constructor by passing
+.nf
+.B "-Wl,-u,__libvecpf_init"
+.fi
+during the link stage as in the following example:
+
+.in +0.5i
+.B gcc -static -maltivec -O3 -m32 -g -Wall -o foo foo.c -mcpu=power7 -Wl,-u,__libvecpf_init -lvecpf -Wno-format
+.in -0.5i
+
+.SH DEPENDENCIES
+GLIBC printf-hooks support didn't go into GLIBC until version 2.10.
+.SH LIMITATIONS
+Libvecpf only supports the default separator; as things are today the GLIBC printf-hooks mechanism doesn't allow separator flags to be changed.
+.SH RATIONALE
+.SH REFERENCES
+.TP
+.B Power ISA\(tm Version 2.06
+.TP
+.B AltiVec\(tm Technology Programming Interface Manual, Freescale Semiconductor, 1999.
+.TP
+.B Power Architecture\(rg 32-bit Application Binary Interface Supplement 1.0 - Linux\(rg & Embedded
+.SH SEE ALSO
+.BR printf (3)
+.SH REPORTING BUGS
+.PP
+Email bug reports to Ryan S. Arnold <rsa@linux.vnet.ibm.com>.
+.SH AUTHORS
+This manual page was written by Ryan S. Arnold <rsa@linux.vnet.ibm.com>.

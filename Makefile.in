@@ -143,7 +143,8 @@ endif
 #	$(INSTALL) -t $(inst_includedir)/$(lib_name) $(install_headers)/*.h
 	$(INSTALL) -d $(inst_mandir)/
 	$(INSTALL) -d $(inst_mandir)/man3
-	$(INSTALL) -t $(inst_mandir)/man3/ $(top_srcdir)/man/libvecpf.3.gz
+	$(INSTALL) -t $(inst_mandir)/man3/ $(top_srcdir)/man/libvecpf.3
+	gzip $(inst_mandir)/man3/libvecpf.3
 	ln -f -s libvecpf.3.gz $(inst_mandir)/man3/vecpf.3.gz
 
 .PHONY: install
