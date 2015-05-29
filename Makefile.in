@@ -53,7 +53,7 @@ INSTALL = install
 
 install_headers=$(top_srcdir)/include
 
-ALL_FLAGS = -maltivec @CFLAGS@ @picflag@
+ALL_FLAGS = -maltivec @CFLAGS@ @picflag@ $(CPPFLAGS)
 
 all: @enable_shared@ @enable_static@
 
@@ -117,10 +117,10 @@ $(top_builddir)/$(SHARED_SONAME_LIB): $(top_builddir)/$(SHARED_REALNAME_LIB)
 $(top_builddir)/$(SHARED_REALNAME_LIB): $(top_builddir)/vecpf.o
 	@echo +Linking relocatable object files into $@.
 ifeq ($(sysheaders), )
-	@CC@ $(ALL_FLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o  -I$(top_srcdir)
+	@CC@ $(ALL_FLAGS) $(LDFLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o  -I$(top_srcdir)
 	@echo
 else
-	@CC@ $(ALL_FLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o -I$(sysheaders)  -I$(top_srcdir)
+	@CC@ $(ALL_FLAGS) $(LDFLAGS) -Wall -shared -Wl,-soname,$(SHARED_SONAME_LIB) -o $@ $(top_builddir)/vecpf.o -I$(sysheaders)  -I$(top_srcdir)
 	@echo
 endif
 
