@@ -80,7 +80,7 @@ or
 .IR int s.
 .TP
 .B vh, hv
-A following integer conversions correponds to a 16 byte vector composed of eight
+A following integer conversions corresponds to a 16 byte vector composed of eight
 .I vector unsigned
 .IR short s
 or
@@ -399,7 +399,7 @@ specifiers, respectively.
 #include <altivec.h>
 
 int main() {
-  vector double d = { -1111.12304912348f, 4567.987654f };
+  vector double d = { \-1111.12304912348f, 4567.987654f };
 
   printf("%16.16vvf\n", d);
 
@@ -407,7 +407,7 @@ int main() {
 }
 .fi
 .SS Warnings
-Using the additional printf length modifiers defined by this library in a program will cause the GCC compiler to complain in the following manner when compiled with -Wall:
+Using the additional printf length modifiers defined by this library in a program will cause the GCC compiler to complain in the following manner when compiled with \-Wall:
 
 .in +0.5i
 .B warning: unknown conversion type character ‘v’ in format
