@@ -1,49 +1,49 @@
-AC_INIT(vecpf, 1.0.0)
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+AC_INIT(libvecpf, 1.0.0, https://github.com/Libvecpf/libvecpf/issues)
 AC_PREREQ(2.60)
+
+#
+# Automake initialization
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_MAINTAINER_MODE([disable])
 
 AC_CONFIG_SRCDIR([vecpf.c])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_USE_SYSTEM_EXTENSIONS([_GNU_SOURCE])
 
-AC_ARG_ENABLE([shared],
-              AS_HELP_STRING([--enable-shared],
-                             [build shared library @<:@default@:>@]),
-              [case "$enableval" in
-  yes)
-       enable_shared=shared
-       AC_MSG_NOTICE(enabling support for a shared library.);;
-   no)
-       enable_shared=
-       AC_MSG_NOTICE(disabling support for a shared library.);;
-    *)
-       enable_shared=
-       AC_MSG_NOTICE(enabling support for a shared library.);;
-  esac],
-              enable_shared=shared )
-AC_SUBST(enable_shared)
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_LN_S
+AM_PROG_AR
+AC_PROG_RANLIB
+LT_INIT
 
-AC_ARG_ENABLE([static],
-              AS_HELP_STRING([--enable-static],
-                             [build static library @<:@not default@:>@]),
-              [case "$enableval" in
-  yes)
-       enable_static=static
-       AC_MSG_NOTICE(enabling support for a static library.);;
-   no)
-       enable_static=
-       AC_MSG_NOTICE(disabling support for a static library.);;
-    *)
-       enable_static=static
-       AC_MSG_NOTICE(enabling support for a static library.);;
- esac],
-              enable_static=)
-AC_SUBST(enable_static)
+#
+# Pass libtool options to automake
+AM_CONDITIONAL([TEST_SHARED], [test "x$enable_shared" = "xyes"])
+AM_CONDITIONAL([TEST_STATIC], [test "x$enable_static" = "xyes"])
 
-
+# Enable the use of non-default location of system headers
+AC_ARG_WITH([headers],
+	    AC_HELP_STRING([--with-headers=PATH],
+			   [location of system headers to use (for example /usr/src/linux/include) @<:@default=compiler default@:>@]),
+	    [sysheaders=$withval],
+	    [sysheaders=])
 AC_SUBST(sysheaders, [])
-AC_ARG_WITH([headers], AC_HELP_STRING([--with-headers=PATH], [location of system headers to use (for example /usr/src/linux/include)
-        @<:@default=compiler default@:>@]), [sysheaders=$withval], [sysheaders=])
+AM_CONDITIONAL([SYSHEADERS_SET], [test "x$sysheaders" != "x"])
+
+# Checks for header files.
+AC_CHECK_HEADERS([limits.h locale.h stdlib.h string.h printf.h altivec.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_SIZE_T
+
+# Checks for library functions.
+AC_CHECK_FUNCS([memset])
 
 # Check for GLIBC 2.10 headers
 have_glibc_2_10_headers=yes
@@ -107,16 +107,8 @@ picflag="-fpic"
 AC_MSG_NOTICE(configuring with "$picflag")
 AC_SUBST(picflag)
 
-# Checks for programs.
-AC_PROG_CC
-AC_PROG_LN_S
-AC_PROG_RANLIB
-
 AC_DEFINE(_GNU_SOURCE)
 AC_USE_SYSTEM_EXTENSIONS
 
-AC_CHECK_HEADER(printf.h)
-AC_CHECK_HEADER(altivec.h)
-
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile man/Makefile])
 AC_OUTPUT
