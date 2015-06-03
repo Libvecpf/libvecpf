@@ -45,6 +45,8 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([memset])
 
+AX_CFLAGS_WARN_ALL
+
 # Check for GLIBC 2.10 headers
 have_glibc_2_10_headers=yes
 
@@ -68,7 +70,10 @@ fi
 
 have_glibc_2_10=yes
 
-# Check for vector __int128_t compiler support
+# Check if the compiler supports vector instructions.
+AX_APPEND_COMPILE_FLAGS([-maltivec], [CFLAGS])
+
+# Check for vector __int128_t compiler support.
 AC_CACHE_CHECK(for __int128_t, libvecpf_cv_int128_t,
  AC_TRY_COMPILE([ ], [
  vector __int128_t u = {0};
@@ -101,6 +106,9 @@ if test x$have_glibc_2_10 != xyes; then
 	       doesn't provide this functionality.  You will not be able to
 	       successfully execute the test suite.])
 fi
+
+# Check if the compiler supports -Werror.
+AX_APPEND_COMPILE_FLAGS([-Werror], [CFLAGS])
 
 # It's ok to build the static lib with PIC.
 picflag="-fpic"
