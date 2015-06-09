@@ -37,4 +37,8 @@ test_vecpf_static_LDFLAGS = -all-static -Wl,-u,__libvecpf_init
 test_vecpf_static_LDADD = libvecpf.la
 endif
 
-dist_doc_DATA = README LICENSE
+dist_doc_DATA = README LICENSE ChangeLog.md
+
+ChangeLog.md: generate-changelog.sh
+	$(am__cd) $(top_srcdir) && ./generate-changelog.sh \
+	  > $(abs_top_builddir)/$@
