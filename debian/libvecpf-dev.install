@@ -1,0 +1,3 @@
+vecpf.h usr/include/libvecpf
+usr/lib/*/libvecpf.so
+usr/share/man/*
