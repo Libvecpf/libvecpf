@@ -38,3 +38,7 @@ test_vecpf_static_LDADD = libvecpf.la
 endif
 
 dist_doc_DATA = README LICENSE
+
+.PHONY: deb
+deb:
+	dpkg-buildpackage
