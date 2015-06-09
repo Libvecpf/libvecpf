@@ -1,4 +1,15 @@
 *~
+*.la
+*.lo
+*.log
+*.o
+*.trs
+.libs/
 autom4te.cache
-autoscan.log
+config.h
+config.status
 configure.scan
+libtool
+Makefile
+stamp-h1
+test_vecpf_*
