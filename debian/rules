@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+ifeq "$(DEB_BUILD_ARCH)" "ppc64el"
+# As ppc64el doesn't support older processors, it's highly recommended to
+# enable POWER8 vector instructions.
+CFLAGS+="-mcpu=power8"
+endif
+
+%:
+	dh $@ --with autoreconf

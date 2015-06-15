@@ -39,6 +39,10 @@ endif
 
 dist_doc_DATA = README LICENSE ChangeLog.md
 
+.PHONY: deb
+deb:
+	dpkg-buildpackage
+
 ChangeLog.md: generate-changelog.sh
 	$(am__cd) $(top_srcdir) && ./generate-changelog.sh \
 	  > $(abs_top_builddir)/$@

@@ -1,0 +1,4 @@
+autoreconf.after
+autoreconf.before
+*.log
+tmp/
