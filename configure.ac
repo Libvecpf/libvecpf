@@ -3,7 +3,7 @@
 
 # Version
 m4_define([MAJOR], 1)
-m4_define([MINOR], 0)
+m4_define([MINOR], 1)
 m4_define([PATCH], 0)
 
 
