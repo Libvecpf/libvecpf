@@ -144,7 +144,7 @@ am__v_lt_0 = --silent
 am__v_lt_1 = 
 libvecpf_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libvecpf_la_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+	$(CFLAGS) $(libvecpf_la_LDFLAGS) $(LDFLAGS) -o $@
 @TEST_SHARED_TRUE@am__EXEEXT_1 = test_vecpf_shared$(EXEEXT)
 @TEST_STATIC_TRUE@am__EXEEXT_2 = test_vecpf_static$(EXEEXT)
 am__test_vecpf_shared_SOURCES_DIST = test_vecpf.c
@@ -504,6 +504,7 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
+LIBVECPF_SO_VERSION = @LIBVECPF_SO_VERSION@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -596,6 +597,7 @@ noinst_HEADERS = vecpf.h
 lib_LTLIBRARIES = libvecpf.la
 libvecpf_la_SOURCES = vecpf.c
 libvecpf_la_CFLAGS = $(include_sysheaders)
+libvecpf_la_LDFLAGS = -version-info $(LIBVECPF_SO_VERSION)
 TESTS = $(check_PROGRAMS)
 @TEST_SHARED_TRUE@test_vecpf_shared_SOURCES = test_vecpf.c
 @TEST_SHARED_TRUE@test_vecpf_shared_DEPENDENCIES = libvecpf.la

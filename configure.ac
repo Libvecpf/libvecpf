@@ -1,6 +1,14 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-AC_INIT(libvecpf, 1.0.0, https://github.com/Libvecpf/libvecpf/issues)
+
+# Version
+m4_define([MAJOR], 1)
+m4_define([MINOR], 0)
+m4_define([PATCH], 0)
+
+
+AC_INIT(libvecpf, [MAJOR.MINOR.PATCH],
+	https://github.com/Libvecpf/libvecpf/issues)
 AC_PREREQ(2.60)
 
 #
@@ -11,6 +19,12 @@ AM_MAINTAINER_MODE([disable])
 AC_CONFIG_SRCDIR([vecpf.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+
+# Update this value for every release: (A:B:C will map to foo.so.(A-C).C.B)
+# http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+LIBVECPF_SO_VERSION=MAJOR:MINOR:PATCH
+AC_SUBST(LIBVECPF_SO_VERSION)
+
 
 AC_USE_SYSTEM_EXTENSIONS([_GNU_SOURCE])
 

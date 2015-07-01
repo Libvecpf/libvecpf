@@ -13,6 +13,7 @@ noinst_HEADERS = vecpf.h
 lib_LTLIBRARIES = libvecpf.la
 libvecpf_la_SOURCES = vecpf.c
 libvecpf_la_CFLAGS = $(include_sysheaders)
+libvecpf_la_LDFLAGS = -version-info $(LIBVECPF_SO_VERSION)
 
 # Define which check programs should be built
 check_PROGRAMS =
