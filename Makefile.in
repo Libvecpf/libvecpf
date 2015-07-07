@@ -1390,7 +1390,7 @@ uninstall-am: uninstall-dist_docDATA uninstall-libLTLIBRARIES
 deb:
 	dpkg-buildpackage
 
-ChangeLog.md: generate-changelog.sh
+ChangeLog.md:
 	$(am__cd) $(top_srcdir) && ./generate-changelog.sh \
 	  > $(abs_top_builddir)/$@
 

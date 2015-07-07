@@ -43,6 +43,6 @@ dist_doc_DATA = README LICENSE ChangeLog.md
 deb:
 	dpkg-buildpackage
 
-ChangeLog.md: generate-changelog.sh
+ChangeLog.md:
 	$(am__cd) $(top_srcdir) && ./generate-changelog.sh \
 	  > $(abs_top_builddir)/$@
