@@ -337,8 +337,13 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
 #ifdef HAVE_INT128_T
         case VDT_int128:
         {
-          fprintf (fp, fmt_str, info->width, info->prec, (vp_u.i));
-          fprintf (fp, fmt_str, info->width, info->prec, (vp_u.i)<<64);
+# ifdef __LITTLE_ENDIAN__
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[1]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[0]);
+# else
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[0]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[1]);
+# endif
           break;
         }
 #endif

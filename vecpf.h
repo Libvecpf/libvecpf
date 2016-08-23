@@ -46,6 +46,8 @@
 typedef union
 {
   vector unsigned int v;
+  unsigned long       ul[2];
+  signed long         sl[2];
   unsigned int        ui[4];
   signed int          si[4];
   unsigned short      sh[8];

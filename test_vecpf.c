@@ -1354,8 +1354,13 @@ gen_cmp_str (int data_type, void *vec_ptr, const char *format_str, char *out_buf
     }
 #ifdef HAVE_INT128_T
     case VDT_int128: {
-       index += sprintf (out_buffer, format_str, u.i);
-       sprintf (out_buffer + index, format_str, (u.i)<<64);
+# ifdef __LITTLE_ENDIAN__
+      index += sprintf (out_buffer, format_str, u.ul[1]);
+      sprintf (out_buffer + index, format_str, u.ul[0]);
+# else
+       index += sprintf (out_buffer, format_str, u.ul[0]);
+       sprintf (out_buffer + index, format_str, u.ul[1]);
+# endif
        break;
     }
 #endif
