@@ -16394,19 +16394,7 @@ _ACEOF
 fi
 
 
-# Checks for library functions.
-for ac_func in memset
-do :
-  ac_fn_c_check_func "$LINENO" "memset" "ac_cv_func_memset"
-if test "x$ac_cv_func_memset" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_MEMSET 1
-_ACEOF
-
-fi
-done
-
-
+# Enables reasonable warnings.
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -16490,37 +16478,31 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-# Check for GLIBC 2.10 headers
-have_glibc_2_10_headers=yes
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for printf-hook register_printf_type () in printf.h to verify GLIBC 2.10" >&5
-$as_echo_n "checking for printf-hook register_printf_type () in printf.h to verify GLIBC 2.10... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include "printf.h"
-int
-main ()
-{
-
- static int foo;
- void foo_va (void *mem, va_list *ap)
- {
-   return;
- }
- foo = register_printf_type (foo_va);
-
-  ;
-  return 0;
-}
+# Checks for library functions.
+for ac_func in memset
+do :
+  ac_fn_c_check_func "$LINENO" "memset" "ac_cv_func_memset"
+if test "x$ac_cv_func_memset" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMSET 1
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }; have_glibc_2_10_headers=no
+
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+
+for ac_func in register_printf_type
+do :
+  ac_fn_c_check_func "$LINENO" "register_printf_type" "ac_cv_func_register_printf_type"
+if test "x$ac_cv_func_register_printf_type" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_REGISTER_PRINTF_TYPE 1
+_ACEOF
+ have_glibc_2_10_headers=yes
+else
+  have_glibc_2_10_headers=no
+fi
+done
+
 
 if test x$have_glibc_2_10_headers != xyes; then
   as_fn_error $? "Building Libvecpf requires a GLIBC printf.h header that
@@ -16618,25 +16600,21 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+     vector __int128_t u = {0};
+     return 0;
+
 int
 main ()
 {
-
- vector __int128_t u = {0};
- return 0;
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-
- libvecpf_cv_int128_t=yes
-
+  libvecpf_cv_int128_t=yes
 else
-
- libvecpf_cv_int128_t=no
-
+  libvecpf_cv_int128_t=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
@@ -16656,21 +16634,14 @@ fi
 $as_echo_n "checking for register_printf_type() runtime support... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include "printf.h"
-int
-main ()
-{
-
- static int foo;
- void foo_va (void *mem, va_list *ap)
- {
-   return;
- }
- foo = register_printf_type (foo_va);
-
-  ;
-  return 0;
+void foo(void *__mem, va_list *__ap) {}
+int main() {
+	int result = register_printf_type(foo);
+	return 0;
 }
+
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5

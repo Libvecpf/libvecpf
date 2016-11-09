@@ -56,23 +56,12 @@ AC_CHECK_HEADERS([limits.h locale.h stdlib.h string.h printf.h altivec.h])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 
-# Checks for library functions.
-AC_CHECK_FUNCS([memset])
-
+# Enables reasonable warnings.
 AX_CFLAGS_WARN_ALL
 
-# Check for GLIBC 2.10 headers
-have_glibc_2_10_headers=yes
-
-AC_MSG_CHECKING([for printf-hook register_printf_type () in printf.h to verify GLIBC 2.10])
-AC_TRY_COMPILE([#include "printf.h"],[
- static int foo;
- void foo_va (void *mem, va_list *ap)
- {
-   return;
- }
- foo = register_printf_type (foo_va);
- ], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); have_glibc_2_10_headers=no])
+# Checks for library functions.
+AC_CHECK_FUNCS([memset])
+AC_CHECK_FUNCS([register_printf_type], [have_glibc_2_10_headers=yes], [have_glibc_2_10_headers=no])
 
 if test x$have_glibc_2_10_headers != xyes; then
   AC_MSG_ERROR([Building Libvecpf requires a GLIBC printf.h header that
@@ -89,14 +78,10 @@ AX_APPEND_COMPILE_FLAGS([-maltivec], [CFLAGS])
 
 # Check for vector __int128_t compiler support.
 AC_CACHE_CHECK(for __int128_t, libvecpf_cv_int128_t,
- AC_TRY_COMPILE([ ], [
- vector __int128_t u = {0};
- return 0;
- ], [
- libvecpf_cv_int128_t=yes
- ], [
- libvecpf_cv_int128_t=no
- ])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+     vector __int128_t u = {0};
+     return 0;
+  ])], [libvecpf_cv_int128_t=yes], [libvecpf_cv_int128_t=no])
 )
 if test x$libvecpf_cv_int128_t = xyes; then
  AC_DEFINE_UNQUOTED([HAVE_INT128_T], [1], ["Have vector __int128_t type"])
@@ -104,14 +89,14 @@ fi
 
 
 AC_MSG_CHECKING([for register_printf_type() runtime support])
-AC_TRY_LINK([#include "printf.h"],[
- static int foo;
- void foo_va (void *mem, va_list *ap)
- {
-   return;
- }
- foo = register_printf_type (foo_va);
- ], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); have_glibc_2_10=no])
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+#include "printf.h"
+void foo(void *__mem, va_list *__ap) {}
+int main() {
+	int result = register_printf_type(foo);
+	return 0;
+}
+])], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); have_glibc_2_10=no])
 
 if test x$have_glibc_2_10 != xyes; then
   AC_MSG_WARN([Executing Libdfp tests requires a GLIBC runtime that supports
