@@ -44,12 +44,13 @@
        is a null.  Only one separator character may be specified.
 
      New size modifiers:
-       'vl', 'vh', 'lv', 'hv', 'v'
+       'vll', 'vl', 'vh', 'llv', 'lv', 'hv', 'v'
 
      Valid modifiers and conversions (all else are undefined):
 
+         vll or llv: long integer conversions; vectors are composed of eight byte vals
          vl or lv: integer conversions; vectors are composed of four byte vals
-         vh or hv: integer conversions; vectors are composed of two byte vals
+         vh or hv: short integer conversions; vectors are composed of two byte vals
          v: integer conversions; vectors are composed of 1 byte vals
          v: float conversions; vectors are composed of 4 byte vals
 
@@ -120,12 +121,15 @@ vector char CHAR_TEST_VECTOR = { 't', 'h', 'i', 's', ' ', 's', 'p', 'a', 'c', 'e
 
 #ifdef __VSX__
 vector double DOUBLE_TEST_VECTOR = { -(11.0f/9.0f), 9876543210.123456789f };
+vector unsigned long long UINT64_TEST_VECTOR = { -1, 0x1ABCDE0123456789 };
+vector long long INT64_TEST_VECTOR = { LONG_MIN, LONG_MAX };
+vector unsigned long UINT64_TEST_VECTOR_2 = { 0x1ABCDE0123456789, -1 };
+vector long INT64_TEST_VECTOR_2 = { LONG_MAX, LONG_MIN };
 #endif
 
 #ifdef HAVE_INT128_T
 vector __int128_t INT128_TEST_VECTOR  = (vector __int128_t) { ((((__int128_t)-0x0123456789abcdefUL << 64)) + ((__int128_t)0xfedcba9876543210UL))};
 #endif
-
 
 int test_count = 0, failed = 0, verbose = 0;
 char expected_output[1024], actual_output[1024];
@@ -138,7 +142,6 @@ typedef struct {
   const char *format2;         /* Format string to use for vectors */
   const char *format3;         /* Alternate form, if applicable */
 } format_specifiers;
-
 
 format_specifiers uint32_tests[] =
 {
@@ -1243,6 +1246,591 @@ format_specifiers double_tests[] =
 
   { 0, NULL, NULL, NULL }
 };
+
+format_specifiers uint64_tests[] = {
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%llu",  "%vllu", "%llvu" },
+  { __LINE__, "%-llu", "%-vllu", "%-llvu" },
+  { __LINE__, "%+llu", "%+vllu", "%+llvu" },
+  { __LINE__, "% llu", "% vllu", "% llvu" },
+  { __LINE__, "%#llu", "%#vllu", "%#llvu" },
+  { __LINE__, "%'llu", "%'vllu", "%'llvu" },
+  { __LINE__, "%0llu", "%0vllu", "%0llvu" },
+  { __LINE__, "%lu",  "%vllu", "%llvu" },
+  { __LINE__, "%-lu", "%-vllu", "%-llvu" },
+  { __LINE__, "%+lu", "%+vllu", "%+llvu" },
+  { __LINE__, "% lu", "% vllu", "% llvu" },
+  { __LINE__, "%#lu", "%#vllu", "%#llvu" },
+  { __LINE__, "%'lu", "%'vllu", "%'llvu" },
+  { __LINE__, "%0lu", "%0vllu", "%0llvu" },
+
+  /* All combinations of two flags, some of which don't make sense. */
+  { __LINE__, "%-+llu", "%-+vllu", "%-+llvu" },
+  { __LINE__, "%- llu", "%- vllu", "%- llvu" },
+  { __LINE__, "%-#llu", "%-#vllu", "%-#llvu" },
+  { __LINE__, "%-'llu", "%-'vllu", "%-'llvu" },
+  { __LINE__, "%-0llu", "%-0vllu", "%-0llvu" },
+  { __LINE__, "%+ llu", "%+ vllu", "%+ llvu" },
+  { __LINE__, "%+#llu", "%+#vllu", "%+#llvu" },
+  { __LINE__, "%+'llu", "%+'vllu", "%+'llvu" },
+  { __LINE__, "%+0llu", "%+0vllu", "%+0llvu" },
+  { __LINE__, "% #llu", "% #vllu", "% #llvu" },
+  { __LINE__, "% 'llu", "% 'vllu", "% 'llvu" },
+  { __LINE__, "% 0llu", "% 0vllu", "% 0llvu" },
+  { __LINE__, "%#'llu", "%#'vllu", "%#'llvu" },
+  { __LINE__, "%#0llu", "%#0vllu", "%#0llvu" },
+  { __LINE__, "%'0llu", "%'0vllu", "%'0llvu" },
+  { __LINE__, "%-+lu", "%-+vllu", "%-+llvu" },
+  { __LINE__, "%- lu", "%- vllu", "%- llvu" },
+  { __LINE__, "%-#lu", "%-#vllu", "%-#llvu" },
+  { __LINE__, "%-'lu", "%-'vllu", "%-'llvu" },
+  { __LINE__, "%-0lu", "%-0vllu", "%-0llvu" },
+  { __LINE__, "%+ lu", "%+ vllu", "%+ llvu" },
+  { __LINE__, "%+#lu", "%+#vllu", "%+#llvu" },
+  { __LINE__, "%+'lu", "%+'vllu", "%+'llvu" },
+  { __LINE__, "%+0lu", "%+0vllu", "%+0llvu" },
+  { __LINE__, "% #lu", "% #vllu", "% #llvu" },
+  { __LINE__, "% 'lu", "% 'vllu", "% 'llvu" },
+  { __LINE__, "% 0lu", "% 0vllu", "% 0llvu" },
+  { __LINE__, "%#'lu", "%#'vllu", "%#'llvu" },
+  { __LINE__, "%#0lu", "%#0vllu", "%#0llvu" },
+  { __LINE__, "%'0lu", "%'0vllu", "%'0llvu" },
+
+  /* Basic flags with precision. */
+  { __LINE__, "%.5llu",  "%.5vllu", "%.5llvu" },
+  { __LINE__, "%-.5llu", "%-.5vllu", "%-.5llvu" },
+  { __LINE__, "%+.5llu", "%+.5vllu", "%+.5llvu" },
+  { __LINE__, "% .5llu", "% .5vllu", "% .5llvu" },
+  { __LINE__, "%#.5llu", "%#.5vllu", "%#.5llvu" },
+  { __LINE__, "%'.5llu", "%'.5vllu", "%'.5llvu" },
+  { __LINE__, "%0.5llu", "%0.5vllu", "%0.5llvu" },
+  { __LINE__, "%.5lu",  "%.5vllu", "%.5llvu" },
+  { __LINE__, "%-.5lu", "%-.5vllu", "%-.5llvu" },
+  { __LINE__, "%+.5lu", "%+.5vllu", "%+.5llvu" },
+  { __LINE__, "% .5lu", "% .5vllu", "% .5llvu" },
+  { __LINE__, "%#.5lu", "%#.5vllu", "%#.5llvu" },
+  { __LINE__, "%'.5lu", "%'.5vllu", "%'.5llvu" },
+  { __LINE__, "%0.5lu", "%0.5vllu", "%0.5llvu" },
+
+  /* Basic flags with field width. */
+  { __LINE__, "%12llu",  "%12vllu", "%12llvu" },
+  { __LINE__, "%-12llu", "%-12vllu", "%-12llvu" },
+  { __LINE__, "%+12llu", "%+12vllu", "%+12llvu" },
+  { __LINE__, "% 12llu", "% 12vllu", "% 12llvu" },
+  { __LINE__, "%#12llu", "%#12vllu", "%#12llvu" },
+  { __LINE__, "%'12llu", "%'12vllu", "%'12llvu" },
+  { __LINE__, "%012llu", "%012vllu", "%012llvu" },
+  { __LINE__, "%12lu",  "%12vllu", "%12llvu" },
+  { __LINE__, "%-12lu", "%-12vllu", "%-12llvu" },
+  { __LINE__, "%+12lu", "%+12vllu", "%+12llvu" },
+  { __LINE__, "% 12lu", "% 12vllu", "% 12llvu" },
+  { __LINE__, "%#12lu", "%#12vllu", "%#12llvu" },
+  { __LINE__, "%'12lu", "%'12vllu", "%'12llvu" },
+  { __LINE__, "%012lu", "%012vllu", "%012llvu" },
+
+  /* Basic flags with field width and precision. */
+  { __LINE__, "%15.7llu",  "%15.7vllu", "%15.7llvu" },
+  { __LINE__, "%-15.7llu", "%-15.7vllu", "%-15.7llvu" },
+  { __LINE__, "%+15.7llu", "%+15.7vllu", "%+15.7llvu" },
+  { __LINE__, "% 15.7llu", "% 15.7vllu", "% 15.7llvu" },
+  { __LINE__, "%#15.7llu", "%#15.7vllu", "%#15.7llvu" },
+  { __LINE__, "%'15.7llu", "%'15.7vllu", "%'15.7llvu" },
+  { __LINE__, "%015.7llu", "%015.7vllu", "%015.7llvu" },
+  { __LINE__, "%15.7lu",  "%15.7vllu", "%15.7llvu" },
+  { __LINE__, "%-15.7lu", "%-15.7vllu", "%-15.7llvu" },
+  { __LINE__, "%+15.7lu", "%+15.7vllu", "%+15.7llvu" },
+  { __LINE__, "% 15.7lu", "% 15.7vllu", "% 15.7llvu" },
+  { __LINE__, "%#15.7lu", "%#15.7vllu", "%#15.7llvu" },
+  { __LINE__, "%'15.7lu", "%'15.7vllu", "%'15.7llvu" },
+  { __LINE__, "%015.7lu", "%015.7vllu", "%015.7llvu" },
+
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%llo",  "%vllo", "%llvo" },
+  { __LINE__, "%-llo", "%-vllo", "%-llvo" },
+  { __LINE__, "%+llo", "%+vllo", "%+llvo" },
+  { __LINE__, "% llo", "% vllo", "% llvo" },
+  { __LINE__, "%#llo", "%#vllo", "%#llvo" },
+  { __LINE__, "%'llo", "%'vllo", "%'llvo" },
+  { __LINE__, "%0llo", "%0vllo", "%0llvo" },
+  { __LINE__, "%lo",  "%vllo", "%llvo" },
+  { __LINE__, "%-lo", "%-vllo", "%-llvo" },
+  { __LINE__, "%+lo", "%+vllo", "%+llvo" },
+  { __LINE__, "% lo", "% vllo", "% llvo" },
+  { __LINE__, "%#lo", "%#vllo", "%#llvo" },
+  { __LINE__, "%'lo", "%'vllo", "%'llvo" },
+  { __LINE__, "%0lo", "%0vllo", "%0llvo" },
+
+  /* All combinations of two flags, some of which don't make sense. */
+  { __LINE__, "%-+llo", "%-+vllo", "%-+llvo" },
+  { __LINE__, "%- llo", "%- vllo", "%- llvo" },
+  { __LINE__, "%-#llo", "%-#vllo", "%-#llvo" },
+  { __LINE__, "%-'llo", "%-'vllo", "%-'llvo" },
+  { __LINE__, "%-0llo", "%-0vllo", "%-0llvo" },
+  { __LINE__, "%+ llo", "%+ vllo", "%+ llvo" },
+  { __LINE__, "%+#llo", "%+#vllo", "%+#llvo" },
+  { __LINE__, "%+'llo", "%+'vllo", "%+'llvo" },
+  { __LINE__, "%+0llo", "%+0vllo", "%+0llvo" },
+  { __LINE__, "% #llo", "% #vllo", "% #llvo" },
+  { __LINE__, "% 'llo", "% 'vllo", "% 'llvo" },
+  { __LINE__, "% 0llo", "% 0vllo", "% 0llvo" },
+  { __LINE__, "%#'llo", "%#'vllo", "%#'llvo" },
+  { __LINE__, "%#0llo", "%#0vllo", "%#0llvo" },
+  { __LINE__, "%'0llo", "%'0vllo", "%'0llvo" },
+  { __LINE__, "%-+lo", "%-+vllo", "%-+llvo" },
+  { __LINE__, "%- lo", "%- vllo", "%- llvo" },
+  { __LINE__, "%-#lo", "%-#vllo", "%-#llvo" },
+  { __LINE__, "%-'lo", "%-'vllo", "%-'llvo" },
+  { __LINE__, "%-0lo", "%-0vllo", "%-0llvo" },
+  { __LINE__, "%+ lo", "%+ vllo", "%+ llvo" },
+  { __LINE__, "%+#lo", "%+#vllo", "%+#llvo" },
+  { __LINE__, "%+'lo", "%+'vllo", "%+'llvo" },
+  { __LINE__, "%+0lo", "%+0vllo", "%+0llvo" },
+  { __LINE__, "% #lo", "% #vllo", "% #llvo" },
+  { __LINE__, "% 'lo", "% 'vllo", "% 'llvo" },
+  { __LINE__, "% 0lo", "% 0vllo", "% 0llvo" },
+  { __LINE__, "%#'lo", "%#'vllo", "%#'llvo" },
+  { __LINE__, "%#0lo", "%#0vllo", "%#0llvo" },
+  { __LINE__, "%'0lo", "%'0vllo", "%'0llvo" },
+
+  /* Basic flags with precision. */
+  { __LINE__, "%.5llo",  "%.5vllo", "%.5llvo" },
+  { __LINE__, "%-.5llo", "%-.5vllo", "%-.5llvo" },
+  { __LINE__, "%+.5llo", "%+.5vllo", "%+.5llvo" },
+  { __LINE__, "% .5llo", "% .5vllo", "% .5llvo" },
+  { __LINE__, "%#.5llo", "%#.5vllo", "%#.5llvo" },
+  { __LINE__, "%'.5llo", "%'.5vllo", "%'.5llvo" },
+  { __LINE__, "%0.5llo", "%0.5vllo", "%0.5llvo" },
+  { __LINE__, "%.5lo",  "%.5vllo", "%.5llvo" },
+  { __LINE__, "%-.5lo", "%-.5vllo", "%-.5llvo" },
+  { __LINE__, "%+.5lo", "%+.5vllo", "%+.5llvo" },
+  { __LINE__, "% .5lo", "% .5vllo", "% .5llvo" },
+  { __LINE__, "%#.5lo", "%#.5vllo", "%#.5llvo" },
+  { __LINE__, "%'.5lo", "%'.5vllo", "%'.5llvo" },
+  { __LINE__, "%0.5lo", "%0.5vllo", "%0.5llvo" },
+
+  /* Basic flags with field width. */
+  { __LINE__, "%12llo",  "%12vllo", "%12llvo" },
+  { __LINE__, "%-12llo", "%-12vllo", "%-12llvo" },
+  { __LINE__, "%+12llo", "%+12vllo", "%+12llvo" },
+  { __LINE__, "% 12llo", "% 12vllo", "% 12llvo" },
+  { __LINE__, "%#12llo", "%#12vllo", "%#12llvo" },
+  { __LINE__, "%'12llo", "%'12vllo", "%'12llvo" },
+  { __LINE__, "%012llo", "%012vllo", "%012llvo" },
+  { __LINE__, "%12lo",  "%12vllo", "%12llvo" },
+  { __LINE__, "%-12lo", "%-12vllo", "%-12llvo" },
+  { __LINE__, "%+12lo", "%+12vllo", "%+12llvo" },
+  { __LINE__, "% 12lo", "% 12vllo", "% 12llvo" },
+  { __LINE__, "%#12lo", "%#12vllo", "%#12llvo" },
+  { __LINE__, "%'12lo", "%'12vllo", "%'12llvo" },
+  { __LINE__, "%012lo", "%012vllo", "%012llvo" },
+
+  /* Basic flags with field width and precision. */
+  { __LINE__, "%15.7llo",  "%15.7vllo", "%15.7llvo" },
+  { __LINE__, "%-15.7llo", "%-15.7vllo", "%-15.7llvo" },
+  { __LINE__, "%+15.7llo", "%+15.7vllo", "%+15.7llvo" },
+  { __LINE__, "% 15.7llo", "% 15.7vllo", "% 15.7llvo" },
+  { __LINE__, "%#15.7llo", "%#15.7vllo", "%#15.7llvo" },
+  { __LINE__, "%'15.7llo", "%'15.7vllo", "%'15.7llvo" },
+  { __LINE__, "%015.7llo", "%015.7vllo", "%015.7llvo" },
+  { __LINE__, "%15.7lo",  "%15.7vllo", "%15.7llvo" },
+  { __LINE__, "%-15.7lo", "%-15.7vllo", "%-15.7llvo" },
+  { __LINE__, "%+15.7lo", "%+15.7vllo", "%+15.7llvo" },
+  { __LINE__, "% 15.7lo", "% 15.7vllo", "% 15.7llvo" },
+  { __LINE__, "%#15.7lo", "%#15.7vllo", "%#15.7llvo" },
+  { __LINE__, "%'15.7lo", "%'15.7vllo", "%'15.7llvo" },
+  { __LINE__, "%015.7lo", "%015.7vllo", "%015.7llvo" },
+
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%llx",  "%vllx", "%llvx" },
+  { __LINE__, "%-llx", "%-vllx", "%-llvx" },
+  { __LINE__, "%+llx", "%+vllx", "%+llvx" },
+  { __LINE__, "% llx", "% vllx", "% llvx" },
+  { __LINE__, "%#llx", "%#vllx", "%#llvx" },
+  { __LINE__, "%'llx", "%'vllx", "%'llvx" },
+  { __LINE__, "%0llx", "%0vllx", "%0llvx" },
+  { __LINE__, "%lx",  "%vllx", "%llvx" },
+  { __LINE__, "%-lx", "%-vllx", "%-llvx" },
+  { __LINE__, "%+lx", "%+vllx", "%+llvx" },
+  { __LINE__, "% lx", "% vllx", "% llvx" },
+  { __LINE__, "%#lx", "%#vllx", "%#llvx" },
+  { __LINE__, "%'lx", "%'vllx", "%'llvx" },
+  { __LINE__, "%0lx", "%0vllx", "%0llvx" },
+
+  /* All combinations of two flags, some of which don't make sense. */
+  { __LINE__, "%-+llx", "%-+vllx", "%-+llvx" },
+  { __LINE__, "%- llx", "%- vllx", "%- llvx" },
+  { __LINE__, "%-#llx", "%-#vllx", "%-#llvx" },
+  { __LINE__, "%-'llx", "%-'vllx", "%-'llvx" },
+  { __LINE__, "%-0llx", "%-0vllx", "%-0llvx" },
+  { __LINE__, "%+ llx", "%+ vllx", "%+ llvx" },
+  { __LINE__, "%+#llx", "%+#vllx", "%+#llvx" },
+  { __LINE__, "%+'llx", "%+'vllx", "%+'llvx" },
+  { __LINE__, "%+0llx", "%+0vllx", "%+0llvx" },
+  { __LINE__, "% #llx", "% #vllx", "% #llvx" },
+  { __LINE__, "% 'llx", "% 'vllx", "% 'llvx" },
+  { __LINE__, "% 0llx", "% 0vllx", "% 0llvx" },
+  { __LINE__, "%#'llx", "%#'vllx", "%#'llvx" },
+  { __LINE__, "%#0llx", "%#0vllx", "%#0llvx" },
+  { __LINE__, "%'0llx", "%'0vllx", "%'0llvx" },
+  { __LINE__, "%-+lx", "%-+vllx", "%-+llvx" },
+  { __LINE__, "%- lx", "%- vllx", "%- llvx" },
+  { __LINE__, "%-#lx", "%-#vllx", "%-#llvx" },
+  { __LINE__, "%-'lx", "%-'vllx", "%-'llvx" },
+  { __LINE__, "%-0lx", "%-0vllx", "%-0llvx" },
+  { __LINE__, "%+ lx", "%+ vllx", "%+ llvx" },
+  { __LINE__, "%+#lx", "%+#vllx", "%+#llvx" },
+  { __LINE__, "%+'lx", "%+'vllx", "%+'llvx" },
+  { __LINE__, "%+0lx", "%+0vllx", "%+0llvx" },
+  { __LINE__, "% #lx", "% #vllx", "% #llvx" },
+  { __LINE__, "% 'lx", "% 'vllx", "% 'llvx" },
+  { __LINE__, "% 0lx", "% 0vllx", "% 0llvx" },
+  { __LINE__, "%#'lx", "%#'vllx", "%#'llvx" },
+  { __LINE__, "%#0lx", "%#0vllx", "%#0llvx" },
+  { __LINE__, "%'0lx", "%'0vllx", "%'0llvx" },
+
+  /* Basic flags with precision. */
+  { __LINE__, "%.5llx",  "%.5vllx", "%.5llvx" },
+  { __LINE__, "%-.5llx", "%-.5vllx", "%-.5llvx" },
+  { __LINE__, "%+.5llx", "%+.5vllx", "%+.5llvx" },
+  { __LINE__, "% .5llx", "% .5vllx", "% .5llvx" },
+  { __LINE__, "%#.5llx", "%#.5vllx", "%#.5llvx" },
+  { __LINE__, "%'.5llx", "%'.5vllx", "%'.5llvx" },
+  { __LINE__, "%0.5llx", "%0.5vllx", "%0.5llvx" },
+  { __LINE__, "%.5lx",  "%.5vllx", "%.5llvx" },
+  { __LINE__, "%-.5lx", "%-.5vllx", "%-.5llvx" },
+  { __LINE__, "%+.5lx", "%+.5vllx", "%+.5llvx" },
+  { __LINE__, "% .5lx", "% .5vllx", "% .5llvx" },
+  { __LINE__, "%#.5lx", "%#.5vllx", "%#.5llvx" },
+  { __LINE__, "%'.5lx", "%'.5vllx", "%'.5llvx" },
+  { __LINE__, "%0.5lx", "%0.5vllx", "%0.5llvx" },
+
+  /* Basic flags with field width. */
+  { __LINE__, "%12llx",  "%12vllx", "%12llvx" },
+  { __LINE__, "%-12llx", "%-12vllx", "%-12llvx" },
+  { __LINE__, "%+12llx", "%+12vllx", "%+12llvx" },
+  { __LINE__, "% 12llx", "% 12vllx", "% 12llvx" },
+  { __LINE__, "%#12llx", "%#12vllx", "%#12llvx" },
+  { __LINE__, "%'12llx", "%'12vllx", "%'12llvx" },
+  { __LINE__, "%012llx", "%012vllx", "%012llvx" },
+  { __LINE__, "%12lx",  "%12vllx", "%12llvx" },
+  { __LINE__, "%-12lx", "%-12vllx", "%-12llvx" },
+  { __LINE__, "%+12lx", "%+12vllx", "%+12llvx" },
+  { __LINE__, "% 12lx", "% 12vllx", "% 12llvx" },
+  { __LINE__, "%#12lx", "%#12vllx", "%#12llvx" },
+  { __LINE__, "%'12lx", "%'12vllx", "%'12llvx" },
+  { __LINE__, "%012lx", "%012vllx", "%012llvx" },
+
+  /* Basic flags with field width and precision. */
+  { __LINE__, "%15.7llx",  "%15.7vllx", "%15.7llvx" },
+  { __LINE__, "%-15.7llx", "%-15.7vllx", "%-15.7llvx" },
+  { __LINE__, "%+15.7llx", "%+15.7vllx", "%+15.7llvx" },
+  { __LINE__, "% 15.7llx", "% 15.7vllx", "% 15.7llvx" },
+  { __LINE__, "%#15.7llx", "%#15.7vllx", "%#15.7llvx" },
+  { __LINE__, "%'15.7llx", "%'15.7vllx", "%'15.7llvx" },
+  { __LINE__, "%015.7llx", "%015.7vllx", "%015.7llvx" },
+  { __LINE__, "%15.7lx",  "%15.7vllx", "%15.7llvx" },
+  { __LINE__, "%-15.7lx", "%-15.7vllx", "%-15.7llvx" },
+  { __LINE__, "%+15.7lx", "%+15.7vllx", "%+15.7llvx" },
+  { __LINE__, "% 15.7lx", "% 15.7vllx", "% 15.7llvx" },
+  { __LINE__, "%#15.7lx", "%#15.7vllx", "%#15.7llvx" },
+  { __LINE__, "%'15.7lx", "%'15.7vllx", "%'15.7llvx" },
+  { __LINE__, "%015.7lx", "%015.7vllx", "%015.7llvx" },
+
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%llX",  "%vllX", "%llvX" },
+  { __LINE__, "%-llX", "%-vllX", "%-llvX" },
+  { __LINE__, "%+llX", "%+vllX", "%+llvX" },
+  { __LINE__, "% llX", "% vllX", "% llvX" },
+  { __LINE__, "%#llX", "%#vllX", "%#llvX" },
+  { __LINE__, "%'llX", "%'vllX", "%'llvX" },
+  { __LINE__, "%0llX", "%0vllX", "%0llvX" },
+  { __LINE__, "%lX",  "%vllX", "%llvX" },
+  { __LINE__, "%-lX", "%-vllX", "%-llvX" },
+  { __LINE__, "%+lX", "%+vllX", "%+llvX" },
+  { __LINE__, "% lX", "% vllX", "% llvX" },
+  { __LINE__, "%#lX", "%#vllX", "%#llvX" },
+  { __LINE__, "%'lX", "%'vllX", "%'llvX" },
+  { __LINE__, "%0lX", "%0vllX", "%0llvX" },
+
+  /* All combinations of two flags, some of which don't make sense. */
+  { __LINE__, "%-+llX", "%-+vllX", "%-+llvX" },
+  { __LINE__, "%- llX", "%- vllX", "%- llvX" },
+  { __LINE__, "%-#llX", "%-#vllX", "%-#llvX" },
+  { __LINE__, "%-'llX", "%-'vllX", "%-'llvX" },
+  { __LINE__, "%-0llX", "%-0vllX", "%-0llvX" },
+  { __LINE__, "%+ llX", "%+ vllX", "%+ llvX" },
+  { __LINE__, "%+#llX", "%+#vllX", "%+#llvX" },
+  { __LINE__, "%+'llX", "%+'vllX", "%+'llvX" },
+  { __LINE__, "%+0llX", "%+0vllX", "%+0llvX" },
+  { __LINE__, "% #llX", "% #vllX", "% #llvX" },
+  { __LINE__, "% 'llX", "% 'vllX", "% 'llvX" },
+  { __LINE__, "% 0llX", "% 0vllX", "% 0llvX" },
+  { __LINE__, "%#'llX", "%#'vllX", "%#'llvX" },
+  { __LINE__, "%#0llX", "%#0vllX", "%#0llvX" },
+  { __LINE__, "%'0llX", "%'0vllX", "%'0llvX" },
+  { __LINE__, "%-+lX", "%-+vllX", "%-+llvX" },
+  { __LINE__, "%- lX", "%- vllX", "%- llvX" },
+  { __LINE__, "%-#lX", "%-#vllX", "%-#llvX" },
+  { __LINE__, "%-'lX", "%-'vllX", "%-'llvX" },
+  { __LINE__, "%-0lX", "%-0vllX", "%-0llvX" },
+  { __LINE__, "%+ lX", "%+ vllX", "%+ llvX" },
+  { __LINE__, "%+#lX", "%+#vllX", "%+#llvX" },
+  { __LINE__, "%+'lX", "%+'vllX", "%+'llvX" },
+  { __LINE__, "%+0lX", "%+0vllX", "%+0llvX" },
+  { __LINE__, "% #lX", "% #vllX", "% #llvX" },
+  { __LINE__, "% 'lX", "% 'vllX", "% 'llvX" },
+  { __LINE__, "% 0lX", "% 0vllX", "% 0llvX" },
+  { __LINE__, "%#'lX", "%#'vllX", "%#'llvX" },
+  { __LINE__, "%#0lX", "%#0vllX", "%#0llvX" },
+  { __LINE__, "%'0lX", "%'0vllX", "%'0llvX" },
+
+  /* Basic flags with precision. */
+  { __LINE__, "%.5llX",  "%.5vllX", "%.5llvX" },
+  { __LINE__, "%-.5llX", "%-.5vllX", "%-.5llvX" },
+  { __LINE__, "%+.5llX", "%+.5vllX", "%+.5llvX" },
+  { __LINE__, "% .5llX", "% .5vllX", "% .5llvX" },
+  { __LINE__, "%#.5llX", "%#.5vllX", "%#.5llvX" },
+  { __LINE__, "%'.5llX", "%'.5vllX", "%'.5llvX" },
+  { __LINE__, "%0.5llX", "%0.5vllX", "%0.5llvX" },
+  { __LINE__, "%.5lX",  "%.5vllX", "%.5llvX" },
+  { __LINE__, "%-.5lX", "%-.5vllX", "%-.5llvX" },
+  { __LINE__, "%+.5lX", "%+.5vllX", "%+.5llvX" },
+  { __LINE__, "% .5lX", "% .5vllX", "% .5llvX" },
+  { __LINE__, "%#.5lX", "%#.5vllX", "%#.5llvX" },
+  { __LINE__, "%'.5lX", "%'.5vllX", "%'.5llvX" },
+  { __LINE__, "%0.5lX", "%0.5vllX", "%0.5llvX" },
+
+  /* Basic flags with field width. */
+  { __LINE__, "%12llX",  "%12vllX", "%12llvX" },
+  { __LINE__, "%-12llX", "%-12vllX", "%-12llvX" },
+  { __LINE__, "%+12llX", "%+12vllX", "%+12llvX" },
+  { __LINE__, "% 12llX", "% 12vllX", "% 12llvX" },
+  { __LINE__, "%#12llX", "%#12vllX", "%#12llvX" },
+  { __LINE__, "%'12llX", "%'12vllX", "%'12llvX" },
+  { __LINE__, "%012llX", "%012vllX", "%012llvX" },
+  { __LINE__, "%12lX",  "%12vllX", "%12llvX" },
+  { __LINE__, "%-12lX", "%-12vllX", "%-12llvX" },
+  { __LINE__, "%+12lX", "%+12vllX", "%+12llvX" },
+  { __LINE__, "% 12lX", "% 12vllX", "% 12llvX" },
+  { __LINE__, "%#12lX", "%#12vllX", "%#12llvX" },
+  { __LINE__, "%'12lX", "%'12vllX", "%'12llvX" },
+  { __LINE__, "%012lX", "%012vllX", "%012llvX" },
+
+  /* Basic flags with field width and precision. */
+  { __LINE__, "%15.7llX",  "%15.7vllX", "%15.7llvX" },
+  { __LINE__, "%-15.7llX", "%-15.7vllX", "%-15.7llvX" },
+  { __LINE__, "%+15.7llX", "%+15.7vllX", "%+15.7llvX" },
+  { __LINE__, "% 15.7llX", "% 15.7vllX", "% 15.7llvX" },
+  { __LINE__, "%#15.7llX", "%#15.7vllX", "%#15.7llvX" },
+  { __LINE__, "%'15.7llX", "%'15.7vllX", "%'15.7llvX" },
+  { __LINE__, "%015.7llX", "%015.7vllX", "%015.7llvX" },
+  { __LINE__, "%15.7lX",  "%15.7vllX", "%15.7llvX" },
+  { __LINE__, "%-15.7lX", "%-15.7vllX", "%-15.7llvX" },
+  { __LINE__, "%+15.7lX", "%+15.7vllX", "%+15.7llvX" },
+  { __LINE__, "% 15.7lX", "% 15.7vllX", "% 15.7llvX" },
+  { __LINE__, "%#15.7lX", "%#15.7vllX", "%#15.7llvX" },
+  { __LINE__, "%'15.7lX", "%'15.7vllX", "%'15.7llvX" },
+  { __LINE__, "%015.7lX", "%015.7vllX", "%015.7llvX" },
+
+  { 0, NULL, NULL, NULL }
+};
+
+format_specifiers int64_tests[] = {
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%lld",  "%vlld",  "%llvd" },
+  { __LINE__, "%-lld", "%-vlld", "%-llvd" },
+  { __LINE__, "%+lld", "%+vlld", "%+llvd" },
+  { __LINE__, "% lld", "% vlld", "% llvd" },
+  { __LINE__, "%#lld", "%#vlld", "%#llvd" },
+  { __LINE__, "%'lld", "%'vlld", "%'llvd" },
+  { __LINE__, "%0lld", "%0vlld", "%0llvd" },
+  { __LINE__, "%ld",  "%vlld",  "%llvd" },
+  { __LINE__, "%-ld", "%-vlld", "%-llvd" },
+  { __LINE__, "%+ld", "%+vlld", "%+llvd" },
+  { __LINE__, "% ld", "% vlld", "% llvd" },
+  { __LINE__, "%#ld", "%#vlld", "%#llvd" },
+  { __LINE__, "%'ld", "%'vlld", "%'llvd" },
+  { __LINE__, "%0ld", "%0vlld", "%0llvd" },
+
+  /* All combinations of two flags, some of which don't make sense. */
+  { __LINE__, "%-+lld", "%-+vlld", "%-+llvd" },
+  { __LINE__, "%- lld", "%- vlld", "%- llvd" },
+  { __LINE__, "%-#lld", "%-#vlld", "%-#llvd" },
+  { __LINE__, "%-'lld", "%-'vlld", "%-'llvd" },
+  { __LINE__, "%-0lld", "%-0vlld", "%-0llvd" },
+  { __LINE__, "%+ lld", "%+ vlld", "%+ llvd" },
+  { __LINE__, "%+#lld", "%+#vlld", "%+#llvd" },
+  { __LINE__, "%+'lld", "%+'vlld", "%+'llvd" },
+  { __LINE__, "%+0lld", "%+0vlld", "%+0llvd" },
+  { __LINE__, "% #lld", "% #vlld", "% #llvd" },
+  { __LINE__, "% 'lld", "% 'vlld", "% 'llvd" },
+  { __LINE__, "% 0lld", "% 0vlld", "% 0llvd" },
+  { __LINE__, "%#'lld", "%#'vlld", "%#'llvd" },
+  { __LINE__, "%#0lld", "%#0vlld", "%#0llvd" },
+  { __LINE__, "%'0lld", "%'0vlld", "%'0llvd" },
+  { __LINE__, "%-+ld", "%-+vlld", "%-+llvd" },
+  { __LINE__, "%- ld", "%- vlld", "%- llvd" },
+  { __LINE__, "%-#ld", "%-#vlld", "%-#llvd" },
+  { __LINE__, "%-'ld", "%-'vlld", "%-'llvd" },
+  { __LINE__, "%-0ld", "%-0vlld", "%-0llvd" },
+  { __LINE__, "%+ ld", "%+ vlld", "%+ llvd" },
+  { __LINE__, "%+#ld", "%+#vlld", "%+#llvd" },
+  { __LINE__, "%+'ld", "%+'vlld", "%+'llvd" },
+  { __LINE__, "%+0ld", "%+0vlld", "%+0llvd" },
+  { __LINE__, "% #ld", "% #vlld", "% #llvd" },
+  { __LINE__, "% 'ld", "% 'vlld", "% 'llvd" },
+  { __LINE__, "% 0ld", "% 0vlld", "% 0llvd" },
+  { __LINE__, "%#'ld", "%#'vlld", "%#'llvd" },
+  { __LINE__, "%#0ld", "%#0vlld", "%#0llvd" },
+  { __LINE__, "%'0ld", "%'0vlld", "%'0llvd" },
+
+  /* Basic flags with precision. */
+  { __LINE__, "%.5lld",  "%.5vlld", "%.5llvd" },
+  { __LINE__, "%-.5lld", "%-.5vlld", "%-.5llvd" },
+  { __LINE__, "%+.5lld", "%+.5vlld", "%+.5llvd" },
+  { __LINE__, "% .5lld", "% .5vlld", "% .5llvd" },
+  { __LINE__, "%#.5lld", "%#.5vlld", "%#.5llvd" },
+  { __LINE__, "%'.5lld", "%'.5vlld", "%'.5llvd" },
+  { __LINE__, "%0.5lld", "%0.5vlld", "%0.5llvd" },
+  { __LINE__, "%.5ld",  "%.5vlld", "%.5llvd" },
+  { __LINE__, "%-.5ld", "%-.5vlld", "%-.5llvd" },
+  { __LINE__, "%+.5ld", "%+.5vlld", "%+.5llvd" },
+  { __LINE__, "% .5ld", "% .5vlld", "% .5llvd" },
+  { __LINE__, "%#.5ld", "%#.5vlld", "%#.5llvd" },
+  { __LINE__, "%'.5ld", "%'.5vlld", "%'.5llvd" },
+  { __LINE__, "%0.5ld", "%0.5vlld", "%0.5llvd" },
+
+  /* Basic flags with field width. */
+  { __LINE__, "%12lld",  "%12vlld", "%12llvd" },
+  { __LINE__, "%-12lld", "%-12vlld", "%-12llvd" },
+  { __LINE__, "%+12lld", "%+12vlld", "%+12llvd" },
+  { __LINE__, "% 12lld", "% 12vlld", "% 12llvd" },
+  { __LINE__, "%#12lld", "%#12vlld", "%#12llvd" },
+  { __LINE__, "%'12lld", "%'12vlld", "%'12llvd" },
+  { __LINE__, "%012lld", "%012vlld", "%012llvd" },
+  { __LINE__, "%12ld",  "%12vlld", "%12llvd" },
+  { __LINE__, "%-12ld", "%-12vlld", "%-12llvd" },
+  { __LINE__, "%+12ld", "%+12vlld", "%+12llvd" },
+  { __LINE__, "% 12ld", "% 12vlld", "% 12llvd" },
+  { __LINE__, "%#12ld", "%#12vlld", "%#12llvd" },
+  { __LINE__, "%'12ld", "%'12vlld", "%'12llvd" },
+  { __LINE__, "%012ld", "%012vlld", "%012llvd" },
+
+  /* Basic flags with field width and precision. */
+  { __LINE__, "%15.7lld",  "%15.7vlld", "%15.7llvd" },
+  { __LINE__, "%-15.7lld", "%-15.7vlld", "%-15.7llvd" },
+  { __LINE__, "%+15.7lld", "%+15.7vlld", "%+15.7llvd" },
+  { __LINE__, "% 15.7lld", "% 15.7vlld", "% 15.7llvd" },
+  { __LINE__, "%#15.7lld", "%#15.7vlld", "%#15.7llvd" },
+  { __LINE__, "%'15.7lld", "%'15.7vlld", "%'15.7llvd" },
+  { __LINE__, "%015.7lld", "%015.7vlld", "%015.7llvd" },
+  { __LINE__, "%15.7ld",  "%15.7vlld", "%15.7llvd" },
+  { __LINE__, "%-15.7ld", "%-15.7vlld", "%-15.7llvd" },
+  { __LINE__, "%+15.7ld", "%+15.7vlld", "%+15.7llvd" },
+  { __LINE__, "% 15.7ld", "% 15.7vlld", "% 15.7llvd" },
+  { __LINE__, "%#15.7ld", "%#15.7vlld", "%#15.7llvd" },
+  { __LINE__, "%'15.7ld", "%'15.7vlld", "%'15.7llvd" },
+  { __LINE__, "%015.7ld", "%015.7vlld", "%015.7llvd" },
+
+  /* Basic flags.  Not all flags are supported with this data type. */
+  { __LINE__, "%lli",  "%vlli",  "%llvi" },
+  { __LINE__, "%-lli", "%-vlli", "%-llvi" },
+  { __LINE__, "%+lli", "%+vlli", "%+llvi" },
+  { __LINE__, "% lli", "% vlli", "% llvi" },
+  { __LINE__, "%#lli", "%#vlli", "%#llvi" },
+  { __LINE__, "%'lli", "%'vlli", "%'llvi" },
+  { __LINE__, "%0lli", "%0vlli", "%0llvi" },
+  { __LINE__, "%li",  "%vlli",  "%llvi" },
+  { __LINE__, "%-li", "%-vlli", "%-llvi" },
+  { __LINE__, "%+li", "%+vlli", "%+llvi" },
+  { __LINE__, "% li", "% vlli", "% llvi" },
+  { __LINE__, "%#li", "%#vlli", "%#llvi" },
+  { __LINE__, "%'li", "%'vlli", "%'llvi" },
+  { __LINE__, "%0li", "%0vlli", "%0llvi" },
+
+  /* All combinations of two flags, some of which don't make sense. */
+  { __LINE__, "%-+lli", "%-+vlli", "%-+llvi" },
+  { __LINE__, "%- lli", "%- vlli", "%- llvi" },
+  { __LINE__, "%-#lli", "%-#vlli", "%-#llvi" },
+  { __LINE__, "%-'lli", "%-'vlli", "%-'llvi" },
+  { __LINE__, "%-0lli", "%-0vlli", "%-0llvi" },
+  { __LINE__, "%+ lli", "%+ vlli", "%+ llvi" },
+  { __LINE__, "%+#lli", "%+#vlli", "%+#llvi" },
+  { __LINE__, "%+'lli", "%+'vlli", "%+'llvi" },
+  { __LINE__, "%+0lli", "%+0vlli", "%+0llvi" },
+  { __LINE__, "% #lli", "% #vlli", "% #llvi" },
+  { __LINE__, "% 'lli", "% 'vlli", "% 'llvi" },
+  { __LINE__, "% 0lli", "% 0vlli", "% 0llvi" },
+  { __LINE__, "%#'lli", "%#'vlli", "%#'llvi" },
+  { __LINE__, "%#0lli", "%#0vlli", "%#0llvi" },
+  { __LINE__, "%'0lli", "%'0vlli", "%'0llvi" },
+  { __LINE__, "%-+li", "%-+vlli", "%-+llvi" },
+  { __LINE__, "%- li", "%- vlli", "%- llvi" },
+  { __LINE__, "%-#li", "%-#vlli", "%-#llvi" },
+  { __LINE__, "%-'li", "%-'vlli", "%-'llvi" },
+  { __LINE__, "%-0li", "%-0vlli", "%-0llvi" },
+  { __LINE__, "%+ li", "%+ vlli", "%+ llvi" },
+  { __LINE__, "%+#li", "%+#vlli", "%+#llvi" },
+  { __LINE__, "%+'li", "%+'vlli", "%+'llvi" },
+  { __LINE__, "%+0li", "%+0vlli", "%+0llvi" },
+  { __LINE__, "% #li", "% #vlli", "% #llvi" },
+  { __LINE__, "% 'li", "% 'vlli", "% 'llvi" },
+  { __LINE__, "% 0li", "% 0vlli", "% 0llvi" },
+  { __LINE__, "%#'li", "%#'vlli", "%#'llvi" },
+  { __LINE__, "%#0li", "%#0vlli", "%#0llvi" },
+  { __LINE__, "%'0li", "%'0vlli", "%'0llvi" },
+
+  /* Basic flags with precision. */
+  { __LINE__, "%.5lli",  "%.5vlli", "%.5llvi" },
+  { __LINE__, "%-.5lli", "%-.5vlli", "%-.5llvi" },
+  { __LINE__, "%+.5lli", "%+.5vlli", "%+.5llvi" },
+  { __LINE__, "% .5lli", "% .5vlli", "% .5llvi" },
+  { __LINE__, "%#.5lli", "%#.5vlli", "%#.5llvi" },
+  { __LINE__, "%'.5lli", "%'.5vlli", "%'.5llvi" },
+  { __LINE__, "%0.5lli", "%0.5vlli", "%0.5llvi" },
+  { __LINE__, "%.5li",  "%.5vlli", "%.5llvi" },
+  { __LINE__, "%-.5li", "%-.5vlli", "%-.5llvi" },
+  { __LINE__, "%+.5li", "%+.5vlli", "%+.5llvi" },
+  { __LINE__, "% .5li", "% .5vlli", "% .5llvi" },
+  { __LINE__, "%#.5li", "%#.5vlli", "%#.5llvi" },
+  { __LINE__, "%'.5li", "%'.5vlli", "%'.5llvi" },
+  { __LINE__, "%0.5li", "%0.5vlli", "%0.5llvi" },
+
+  /* Basic flags with field width. */
+  { __LINE__, "%12lli",  "%12vlli", "%12llvi" },
+  { __LINE__, "%-12lli", "%-12vlli", "%-12llvi" },
+  { __LINE__, "%+12lli", "%+12vlli", "%+12llvi" },
+  { __LINE__, "% 12lli", "% 12vlli", "% 12llvi" },
+  { __LINE__, "%#12lli", "%#12vlli", "%#12llvi" },
+  { __LINE__, "%'12lli", "%'12vlli", "%'12llvi" },
+  { __LINE__, "%012lli", "%012vlli", "%012llvi" },
+  { __LINE__, "%12li",  "%12vlli", "%12llvi" },
+  { __LINE__, "%-12li", "%-12vlli", "%-12llvi" },
+  { __LINE__, "%+12li", "%+12vlli", "%+12llvi" },
+  { __LINE__, "% 12li", "% 12vlli", "% 12llvi" },
+  { __LINE__, "%#12li", "%#12vlli", "%#12llvi" },
+  { __LINE__, "%'12li", "%'12vlli", "%'12llvi" },
+  { __LINE__, "%012li", "%012vlli", "%012llvi" },
+
+  /* Basic flags with field width and precision. */
+  { __LINE__, "%15.7lli",  "%15.7vlli", "%15.7llvi" },
+  { __LINE__, "%-15.7lli", "%-15.7vlli", "%-15.7llvi" },
+  { __LINE__, "%+15.7lli", "%+15.7vlli", "%+15.7llvi" },
+  { __LINE__, "% 15.7lli", "% 15.7vlli", "% 15.7llvi" },
+  { __LINE__, "%#15.7lli", "%#15.7vlli", "%#15.7llvi" },
+  { __LINE__, "%'15.7lli", "%'15.7vlli", "%'15.7llvi" },
+  { __LINE__, "%015.7lli", "%015.7vlli", "%015.7llvi" },
+  { __LINE__, "%15.7li",  "%15.7vlli", "%15.7llvi" },
+  { __LINE__, "%-15.7li", "%-15.7vlli", "%-15.7llvi" },
+  { __LINE__, "%+15.7li", "%+15.7vlli", "%+15.7llvi" },
+  { __LINE__, "% 15.7li", "% 15.7vlli", "% 15.7llvi" },
+  { __LINE__, "%#15.7li", "%#15.7vlli", "%#15.7llvi" },
+  { __LINE__, "%'15.7li", "%'15.7vlli", "%'15.7llvi" },
+  { __LINE__, "%015.7li", "%015.7vlli", "%015.7llvi" },
+
+  { 0, NULL, NULL, NULL }
+};
+
 #endif
 
 format_specifiers char_tests[] =
@@ -1321,6 +1909,18 @@ gen_cmp_str (int data_type, void* data, const char *format, char *output)
     case VDT_double:
       to_string (double, format, data, output);
       break;
+    case VDT_signed_long:
+      to_string (signed long, format, data, output);
+      break;
+    case VDT_unsigned_long:
+      to_string (unsigned long, format, data, output);
+      break;
+    case VDT_signed_long_long:
+      to_string (signed long long, format, data, output);
+      break;
+    case VDT_unsigned_long_long:
+      to_string (unsigned long long, format, data, output);
+      break;
 #endif
 #ifdef HAVE_INT128_T
     case VDT_int128:
@@ -1387,6 +1987,18 @@ main (int argc, char *argv[])
 #ifdef __VSX__
   puts ("\nDouble tests (VSX).\n");
   test(double_tests, VDT_double, DOUBLE_TEST_VECTOR)
+
+  puts ("\nSigned 64 bit integer tests (signed long long).\n");
+  test(int64_tests, VDT_signed_long, INT64_TEST_VECTOR)
+
+  puts ("\nUnsigned 64 bit integer tests (unsigned long long).\n");
+  test(uint64_tests, VDT_unsigned_long, UINT64_TEST_VECTOR)
+
+  puts ("\nSigned 64 bit integer tests (signed long).\n");
+  test(int64_tests, VDT_signed_long, INT64_TEST_VECTOR_2)
+
+  puts ("\nUnsigned 64 bit integer tests (unsigned long).\n");
+  test(uint64_tests, VDT_unsigned_long, UINT64_TEST_VECTOR_2)
 #endif
 
   if (failed) {

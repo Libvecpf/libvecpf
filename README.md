@@ -1,7 +1,7 @@
 #Libvecpf: The Vector Printf Library
 For the GNU/Linux Operating System and GNU C Library (glibc) Version 2.10+  
 _Authors: Michael Brutman, Ryan S. Arnold_
-_Contributed by IBM Corporation_  
+_Contributed by IBM Corporation_
 
 This library extends ISO C printf so that it may print out vector data types.  The description of the extensions are in the AltiVec Technology Programming Interface Manual.  Below is a paraphrasing of the extensions:
 
@@ -21,15 +21,16 @@ is a null.  Only one separator character may be specified._
 New size modifiers:
 
 ```
-vl, vh, lv, hv, v
+vll, vl, vh, llv, lv, hv, v
 ```
 
 Valid modifiers and conversions (all else are undefined):
 
 ```
+vll or llv: long integer conversions; vectors are composed of eight byte vals
 vl or lv: integer conversions; vectors are composed of four byte vals
-vh or hv: integer conversions; vectors are composed of two byte vals
-v: integer conversions; vectors are composed of 1 byte vals
+vh or hv: short integer conversions; vectors are composed of two byte vals
+v: byte conversions; vectors are composed of 1 byte vals
 v: float conversions; vectors are composed of 4 byte vals
 ```
 
@@ -45,7 +46,7 @@ Vectors are 16 bytes long and can hold a variety of data types.  These
 are the vector data types that Libvecpf knows about at the moment.
 
 ### Altivec and VSX:
- 
+
 ```
 Type                            Elements  VMX  VSX
 --------------------------------------------------
@@ -64,6 +65,10 @@ pixel                              8       Y    Y
 ```
 Type                            Elements  VMX  VSX
 --------------------------------------------------
+unsigned and signed long           2       N    Y
+bool long                          2       N    Y
+unsigned and signed long long      2       N    Y
+bool long long                     2       N    Y
 double                             2       N    Y
 ```
 

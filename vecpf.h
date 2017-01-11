@@ -29,16 +29,20 @@
 
 /* Table of recognized data types.  */
 
-#define VDT_unsigned_int     (0)
-#define VDT_signed_int       (1)
-#define VDT_unsigned_short   (2)
-#define VDT_signed_short     (3)
-#define VDT_unsigned_char    (4)
-#define VDT_signed_char      (5)
-#define VDT_float            (6)
-#define VDT_double           (7)
+#define VDT_unsigned_long_long (0)
+#define VDT_signed_long_long   (1)
+#define VDT_unsigned_long      (2)
+#define VDT_signed_long        (3)
+#define VDT_unsigned_int       (4)
+#define VDT_signed_int         (5)
+#define VDT_unsigned_short     (6)
+#define VDT_signed_short       (7)
+#define VDT_unsigned_char      (8)
+#define VDT_signed_char        (9)
+#define VDT_float              (10)
+#define VDT_double             (11)
 #ifdef HAVE_INT128_T
-#define VDT_int128           (8)
+#define VDT_int128             (12)
 #endif
 
 /* Union used to pick elements of a particular type from a vector.  */
@@ -46,8 +50,8 @@
 typedef union
 {
   vector unsigned int v;
-  unsigned long       ul[2];
-  signed long         sl[2];
+  unsigned long long  ull[2];
+  signed long long    sll[2];
   unsigned int        ui[4];
   signed int          si[4];
   unsigned short      sh[8];
@@ -57,7 +61,7 @@ typedef union
   float                f[4];
   double               d[2];
 #ifdef HAVE_INT128_T
-  vector __int128_t	i;
+  vector __int128_t    i;
 #endif
 } vp_u_t;
 

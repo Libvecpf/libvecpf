@@ -67,6 +67,10 @@ platforms to support the following Vector datatypes:
   VSX Data Types:
 
     vector double
+    vector unsigned long
+    vector signed long
+    vector unsigned long long
+    vector signed long long
 
 This library could be extended to provide printf support for the following
 Vector data types:

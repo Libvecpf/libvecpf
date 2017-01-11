@@ -49,13 +49,14 @@
        is a null.  Only one separator character may be specified.
 
      New size modifiers:
-       'vl', 'vh', 'lv', 'hv', 'v'
+       'vll', 'vl', 'vh', 'llv', 'lv', 'hv', 'v'
 
      Valid modifiers and conversions (all else are undefined):
 
+         vll or llv: long integer conversions; vectors are composed of eight byte vals
          vl or lv: integer conversions; vectors are composed of four byte vals
-         vh or hv: integer conversions; vectors are composed of two byte vals
-         v: integer conversions; vectors are composed of 1 byte vals
+         vh or hv: short integer conversions; vectors are composed of two byte vals
+         v: byte conversions; vectors are composed of 1 byte vals
          v: float conversions; vectors are composed of 4 byte vals
 
    Deviations from the PIM:
@@ -87,6 +88,10 @@
 
      Type                            Elements  VMX  VSX
      double                             2       N    Y
+     unsigned and signed long           2       N    Y
+     bool long                          2       N    Y
+     unsigned and signed long long      2       N    Y
+     bool long long                     2       N    Y
 
    The Altivec Programming Interface Manual defines how to print all of these
    data types except for pixel, which is undefined and double, which is
@@ -122,6 +127,8 @@ static vector_modifier_t vector_mods[] =
   {-1, L"hv" },  /* Vector of halfwords (alias for vh).  */
   {-1, L"v"  },  /* Vector of char or single precision floats.  */
   {-1, L"vv" },  /* Vector of double precision floats.  */
+  {-1, L"vll" }, /* Vector of quadword.  */
+  {-1, L"llv" }, /* Vector of quadword (alias for vll).  */
 #ifdef HAVE_INT128_T
   {-1, L"vz" },  /* Vector of quadword */
   {-1, L"zv" },  /* Vector of quadword */
@@ -155,9 +162,9 @@ typedef struct
   const int data_type;
 } vector_types_rec_t;
 
-/* The entries for VDT_signed_int, VDT_signed_short, VDT_unsigned_int, and
- * VDT_unsigned_short are duplicated due to the aliases, 'lv' -> 'vl' and 'hv'
- * -> 'vh'.  */
+/* The entries for VDT_signed_long_long, VDT_signed_int, VDT_signed_short,
+ * VDT_unsigned_int, and VDT_unsigned_short are duplicated due to the aliases,
+ * 'lv' -> 'vl' and 'hv' -> 'vh'.  */
 static const vector_types_rec_t int_types_table[] =
 {
 
@@ -166,54 +173,65 @@ static const vector_types_rec_t int_types_table[] =
   {L'd', 2, "hd",  2, VDT_signed_short},
   {L'd', 3, "hd",  2, VDT_signed_short},
   {L'd', 4, "hhd", 1, VDT_signed_char},
+  {L'd', 6, "ld",  8, VDT_signed_long_long},
+  {L'd', 7, "lld", 8, VDT_signed_long_long},
 
   {L'i', 0, "i",   4, VDT_signed_int},
   {L'i', 1, "i",   4, VDT_signed_int},
   {L'i', 2, "hi",  2, VDT_signed_short},
   {L'i', 3, "hi",  2, VDT_signed_short},
   {L'i', 4, "hhi", 1, VDT_signed_char},
+  {L'i', 6, "ld",  8, VDT_signed_long_long},
+  {L'i', 7, "lld", 8, VDT_signed_long_long},
 
   {L'o', 0, "o",   4, VDT_unsigned_int},
   {L'o', 1, "o",   4, VDT_unsigned_int},
   {L'o', 2, "ho",  2, VDT_unsigned_short},
   {L'o', 3, "ho",  2, VDT_unsigned_short},
   {L'o', 4, "hho", 1, VDT_unsigned_char},
+  {L'o', 6, "lo",  8, VDT_unsigned_long_long},
+  {L'o', 7, "llo", 8, VDT_unsigned_long_long},
 
   {L'u', 0, "u",   4, VDT_unsigned_int},
   {L'u', 1, "u",   4, VDT_unsigned_int},
   {L'u', 2, "hu",  2, VDT_unsigned_short},
   {L'u', 3, "hu",  2, VDT_unsigned_short},
   {L'u', 4, "hhu", 1, VDT_unsigned_char},
+  {L'u', 6, "lu",  8, VDT_unsigned_long_long},
+  {L'u', 7, "llu", 8, VDT_unsigned_long_long},
 
   {L'x', 0, "x",   4, VDT_unsigned_int},
   {L'x', 1, "x",   4, VDT_unsigned_int},
   {L'x', 2, "hx",  2, VDT_unsigned_short},
   {L'x', 3, "hx",  2, VDT_unsigned_short},
   {L'x', 4, "hhx", 1, VDT_unsigned_char},
+  {L'x', 6, "lx",  8, VDT_unsigned_long_long},
+  {L'x', 7, "llx", 8, VDT_unsigned_long_long},
 
   {L'X', 0, "X",   4, VDT_unsigned_int},
   {L'X', 1, "X",   4, VDT_unsigned_int},
   {L'X', 2, "hX",  2, VDT_unsigned_short},
   {L'X', 3, "hX",  2, VDT_unsigned_short},
   {L'X', 4, "hhX", 1, VDT_unsigned_char},
+  {L'X', 6, "lX",  8, VDT_unsigned_long_long},
+  {L'X', 7, "llX", 8, VDT_unsigned_long_long},
 
   {L'c', 4, "c", 1, VDT_unsigned_char},
 #ifdef HAVE_INT128_T
-  {L'x', 6, "lx", 16, VDT_int128},
-  {L'X', 6, "lX", 16, VDT_int128},
-  {L'd', 6, "ld", 16, VDT_int128},
-  {L'i', 6, "li", 16, VDT_int128},
-  {L'u', 6, "lu", 16, VDT_int128},
-  {L'o', 6, "lo", 16, VDT_int128},
+  {L'x', 8, "lx", 16, VDT_int128},
+  {L'X', 8, "lX", 16, VDT_int128},
+  {L'd', 8, "ld", 16, VDT_int128},
+  {L'i', 8, "li", 16, VDT_int128},
+  {L'u', 8, "lu", 16, VDT_int128},
+  {L'o', 8, "lo", 16, VDT_int128},
 
-  {L'x', 7, "lx", 16, VDT_int128},
-  {L'X', 7, "lX", 16, VDT_int128},
-  {L'd', 7, "ld", 16, VDT_int128},
-  {L'i', 7, "li", 16, VDT_int128},
-  {L'u', 7, "lu", 16, VDT_int128},
-  {L'o', 7, "lo", 16, VDT_int128},
+  {L'x', 9, "lx", 16, VDT_int128},
+  {L'X', 9, "lX", 16, VDT_int128},
+  {L'd', 9, "ld", 16, VDT_int128},
+  {L'i', 9, "li", 16, VDT_int128},
+  {L'u', 9, "lu", 16, VDT_int128},
+  {L'o', 9, "lo", 16, VDT_int128},
 #endif
-
 };
 static const int int_types_table_len = sizeof (int_types_table) /
 				       sizeof (int_types_table[0]);
@@ -338,15 +356,25 @@ vec_printf_d (FILE *fp, const struct printf_info *info,
         case VDT_int128:
         {
 # ifdef __LITTLE_ENDIAN__
-          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[1]);
-          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[0]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ull[1]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ull[0]);
 # else
-          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[0]);
-          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ul[1]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ull[0]);
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ull[1]);
 # endif
           break;
         }
 #endif
+        case VDT_unsigned_long_long:
+        {
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.ull[i]);
+          break;
+        }
+        case VDT_signed_long_long:
+        {
+          fprintf (fp, fmt_str, info->width, info->prec, vp_u.sll[i]);
+          break;
+        }
         case VDT_unsigned_int:
         {
           fprintf (fp, fmt_str, info->width, info->prec, vp_u.ui[i]);
