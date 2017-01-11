@@ -85,33 +85,63 @@
      ''': Separate digits into groups specified by the locale.
      '0': Pad with zeros instead of spaces.  Ignored if used with '-' or
           a precision is specified.
-
-
 */
 
-static int test_count = 0, failed = 0;
+#define to_string(type, format, data, output) \
+  for (i = 0; i < 16/sizeof(type); i++) \
+    { \
+        output += sprintf (output, format, (*(vector type*) data)[i]); \
+        strcat (output, " "); \
+        output++; \
+    } \
+  *(output - 1) = 0;
 
+#define test( format, id, val ) \
+  for (ptr = format; ptr->format1; ptr++) \
+    { \
+      gen_cmp_str (id, &val, ptr->format1, expected_output); \
+      sprintf (actual_output, ptr->format2, val); \
+      compare (ptr->src_line, expected_output, actual_output); \
+      if (ptr->format3) { \
+        sprintf (actual_output, ptr->format3, val); \
+        compare (ptr->src_line, expected_output, actual_output); \
+      } \
+    }
+
+
+vector unsigned int UINT32_TEST_VECTOR = { 4294967295U, 0, 39, 2147483647 };
+vector signed int INT32_TEST_VECTOR = { (-INT_MAX - 1), 0, 39, 2147483647 };
+vector unsigned short UINT16_TEST_VECTOR = {65535U, 0, 39, 42, 101, 16384, 32767, 32768 };
+vector signed short INT16_TEST_VECTOR = { (-SHRT_MAX -1), -127, -1, 0, 127, 256, 16384, SHRT_MAX };
+vector float FLOAT_TEST_VECTOR = { -(11.0f/9.0f), 0.123456789f, 42.0f, 9876543210.123456789f };
+vector signed char SIGNED_CHAR_TEST_VECTOR = { -128, -120, -99, -61, -43, -38, -1, 0, 1, 19, 76, 85, 10l, 123, 126, 127 };
+vector unsigned char UNSIGNED_CHAR_TEST_VECTOR = { 't', 'h', 'i', 's', ' ', 's', 'p', 'a', 'c', 'e', ' ', 0, 15, 127, 128, 255  };
+vector char CHAR_TEST_VECTOR = { 't', 'h', 'i', 's', ' ', 's', 'p', 'a', 'c', 'e', ' ', 'i', 's', ' ', 'f', 'o'  };
+
+#ifdef __VSX__
+vector double DOUBLE_TEST_VECTOR = { -(11.0f/9.0f), 9876543210.123456789f };
+#endif
+
+#ifdef HAVE_INT128_T
+vector __int128_t INT128_TEST_VECTOR  = (vector __int128_t) { ((((__int128_t)-0x0123456789abcdefUL << 64)) + ((__int128_t)0xfedcba9876543210UL))};
+#endif
+
+
+int test_count = 0, failed = 0, verbose = 0;
 char expected_output[1024], actual_output[1024];
 
 /* Tests are organized by data type.  Try to print a vector using a variety
    of different flags, precisions and conversions. */
-
-
-/* Unsigned 32 bit word tests */
-
 typedef struct {
   int src_line;                /* What line of code is the test on? */
   const char *format1;         /* Format string to use for standard scalars */
   const char *format2;         /* Format string to use for vectors */
   const char *format3;         /* Alternate form, if applicable */
-} uint32_type;
+} format_specifiers;
 
 
-#define UINT32_TEST_VECTOR { 4294967295U, 0, 39, 2147483647 }
-
-uint32_type uint32_tests[] =
+format_specifiers uint32_tests[] =
 {
-
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%u",  "%vlu", "%lvu" },
   { __LINE__, "%-u", "%-vlu", "%-lvu" },
@@ -165,8 +195,6 @@ uint32_type uint32_tests[] =
   { __LINE__, "%'15.7u", "%'15.7vlu", "%'15.7lvu" },
   { __LINE__, "%015.7u", "%015.7vlu", "%015.7lvu" },
 
-
-
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%o",  "%vlo", "%lvo" },
   { __LINE__, "%-o", "%-vlo", "%-lvo" },
@@ -219,7 +247,6 @@ uint32_type uint32_tests[] =
   { __LINE__, "%#15.7o", "%#15.7vlo", "%#15.7lvo" },
   { __LINE__, "%'15.7o", "%'15.7vlo", "%'15.7lvo" },
   { __LINE__, "%015.7o", "%015.7vlo", "%015.7lvo" },
-
 
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%x",  "%vlx", "%lvx" },
@@ -331,17 +358,7 @@ uint32_type uint32_tests[] =
 };
 
 
-
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-  const char *format3;
-} int32_type;
-
-#define INT32_TEST_VECTOR { (-INT_MAX - 1), 0, 39, 2147483647 }
-
-int32_type int32_tests[] =
+format_specifiers int32_tests[] =
 {
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%d",  "%vld",  "%lvd" },
@@ -395,7 +412,6 @@ int32_type int32_tests[] =
   { __LINE__, "%#15.7d", "%#15.7vld", "%#15.7lvd" },
   { __LINE__, "%'15.7d", "%'15.7vld", "%'15.7lvd" },
   { __LINE__, "%015.7d", "%015.7vld", "%015.7lvd" },
-
 
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%i",  "%vli",  "%lvi" },
@@ -454,22 +470,8 @@ int32_type int32_tests[] =
 };
 
 
-
-
-/* Unsigned 16 bit word tests */
-
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-  const char *format3;
-} uint16_type;
-
-#define UINT16_TEST_VECTOR { 65535U, 0, 39, 42, 101, 16384, 32767, 32768 }
-
-uint16_type uint16_tests[] =
+format_specifiers uint16_tests[] =
 {
-
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%u",  "%vhu", "%hvu" },
   { __LINE__, "%-u", "%-vhu", "%-hvu" },
@@ -685,18 +687,7 @@ uint16_type uint16_tests[] =
   { 0, NULL, NULL, NULL }
 };
 
-
-
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-  const char *format3;
-} int16_type;
-
-#define INT16_TEST_VECTOR { (-SHRT_MAX -1), -127, -1, 0, 127, 256, 16384, SHRT_MAX }
-
-int16_type int16_tests[] =
+format_specifiers int16_tests[] =
 {
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%d",  "%vhd",  "%hvd" },
@@ -807,517 +798,477 @@ int16_type int16_tests[] =
   { 0, NULL, NULL, NULL }
 };
 
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-} float_type;
-
-#define FLOAT_TEST_VECTOR { -(11.0f/9.0f), 0.123456789f, 42.0f, 9876543210.123456789f }
-
-float_type float_tests[] =
+format_specifiers float_tests[] =
 {
-
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%f",  "%vf" },
-  { __LINE__, "%-f", "%-vf" },
-  { __LINE__, "%+f", "%+vf" },
-  { __LINE__, "% f", "% vf" },
-  { __LINE__, "%#f", "%#vf" },
-  { __LINE__, "%'f", "%'vf" },
-  { __LINE__, "%0f", "%0vf" },
+  { __LINE__, "%f",  "%vf", NULL },
+  { __LINE__, "%-f", "%-vf", NULL },
+  { __LINE__, "%+f", "%+vf", NULL },
+  { __LINE__, "% f", "% vf", NULL },
+  { __LINE__, "%#f", "%#vf", NULL },
+  { __LINE__, "%'f", "%'vf", NULL },
+  { __LINE__, "%0f", "%0vf", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+f", "%-+vf" },
-  { __LINE__, "%- f", "%- vf" },
-  { __LINE__, "%-#f", "%-#vf" },
-  { __LINE__, "%-'f", "%-'vf" },
-  { __LINE__, "%-0f", "%-0vf" },
-  { __LINE__, "%+ f", "%+ vf" },
-  { __LINE__, "%+#f", "%+#vf" },
-  { __LINE__, "%+'f", "%+'vf" },
-  { __LINE__, "%+0f", "%+0vf" },
-  { __LINE__, "% #f", "% #vf" },
-  { __LINE__, "% 'f", "% 'vf" },
-  { __LINE__, "% 0f", "% 0vf" },
-  { __LINE__, "%#'f", "%#'vf" },
-  { __LINE__, "%#0f", "%#0vf" },
-  { __LINE__, "%'0f", "%'0vf" },
+  { __LINE__, "%-+f", "%-+vf", NULL },
+  { __LINE__, "%- f", "%- vf", NULL },
+  { __LINE__, "%-#f", "%-#vf", NULL },
+  { __LINE__, "%-'f", "%-'vf", NULL },
+  { __LINE__, "%-0f", "%-0vf", NULL },
+  { __LINE__, "%+ f", "%+ vf", NULL },
+  { __LINE__, "%+#f", "%+#vf", NULL },
+  { __LINE__, "%+'f", "%+'vf", NULL },
+  { __LINE__, "%+0f", "%+0vf", NULL },
+  { __LINE__, "% #f", "% #vf", NULL },
+  { __LINE__, "% 'f", "% 'vf", NULL },
+  { __LINE__, "% 0f", "% 0vf", NULL },
+  { __LINE__, "%#'f", "%#'vf", NULL },
+  { __LINE__, "%#0f", "%#0vf", NULL },
+  { __LINE__, "%'0f", "%'0vf", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9f",  "%.9vf" },
-  { __LINE__, "%-.9f",  "%-.9vf" },
-  { __LINE__, "%+.9f",  "%+.9vf" },
-  { __LINE__, "% .9f",  "% .9vf" },
-  { __LINE__, "%#.9f",  "%#.9vf" },
-  { __LINE__, "%'.9f",  "%'.9vf" },
-  { __LINE__, "%0.9f",  "%0.9vf" },
+  { __LINE__, "%.9f",  "%.9vf", NULL },
+  { __LINE__, "%-.9f",  "%-.9vf", NULL },
+  { __LINE__, "%+.9f",  "%+.9vf", NULL },
+  { __LINE__, "% .9f",  "% .9vf", NULL },
+  { __LINE__, "%#.9f",  "%#.9vf", NULL },
+  { __LINE__, "%'.9f",  "%'.9vf", NULL },
+  { __LINE__, "%0.9f",  "%0.9vf", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20f",  "%20vf" },
-  { __LINE__, "%-20f",  "%-20vf" },
-  { __LINE__, "%+20f",  "%+20vf" },
-  { __LINE__, "% 20f",  "% 20vf" },
-  { __LINE__, "%#20f",  "%#20vf" },
-  { __LINE__, "%'20f",  "%'20vf" },
-  { __LINE__, "%020f",  "%020vf" },
+  { __LINE__, "%20f",  "%20vf", NULL },
+  { __LINE__, "%-20f",  "%-20vf", NULL },
+  { __LINE__, "%+20f",  "%+20vf", NULL },
+  { __LINE__, "% 20f",  "% 20vf", NULL },
+  { __LINE__, "%#20f",  "%#20vf", NULL },
+  { __LINE__, "%'20f",  "%'20vf", NULL },
+  { __LINE__, "%020f",  "%020vf", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3f",  "%25.3vf" },
-  { __LINE__, "%-25.3f",  "%-25.3vf" },
-  { __LINE__, "%+25.3f",  "%+25.3vf" },
-  { __LINE__, "% 25.3f",  "% 25.3vf" },
-  { __LINE__, "%#25.3f",  "%#25.3vf" },
-  { __LINE__, "%'25.3f",  "%'25.3vf" },
-  { __LINE__, "%025.3f",  "%025.3vf" },
+  { __LINE__, "%25.3f",  "%25.3vf", NULL },
+  { __LINE__, "%-25.3f",  "%-25.3vf", NULL },
+  { __LINE__, "%+25.3f",  "%+25.3vf", NULL },
+  { __LINE__, "% 25.3f",  "% 25.3vf", NULL },
+  { __LINE__, "%#25.3f",  "%#25.3vf", NULL },
+  { __LINE__, "%'25.3f",  "%'25.3vf", NULL },
+  { __LINE__, "%025.3f",  "%025.3vf", NULL },
 
   /* By this point the code that handles flags, field width and precision
      probably works.  Go for the other conversions on unsigned integers. */
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%e",  "%ve" },
-  { __LINE__, "%-e", "%-ve" },
-  { __LINE__, "%+e", "%+ve" },
-  { __LINE__, "% e", "% ve" },
-  { __LINE__, "%#e", "%#ve" },
-  { __LINE__, "%'e", "%'ve" },
-  { __LINE__, "%0e", "%0ve" },
+  { __LINE__, "%e",  "%ve", NULL },
+  { __LINE__, "%-e", "%-ve", NULL },
+  { __LINE__, "%+e", "%+ve", NULL },
+  { __LINE__, "% e", "% ve", NULL },
+  { __LINE__, "%#e", "%#ve", NULL },
+  { __LINE__, "%'e", "%'ve", NULL },
+  { __LINE__, "%0e", "%0ve", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+e", "%-+ve" },
-  { __LINE__, "%- e", "%- ve" },
-  { __LINE__, "%-#e", "%-#ve" },
-  { __LINE__, "%-'e", "%-'ve" },
-  { __LINE__, "%-0e", "%-0ve" },
-  { __LINE__, "%+ e", "%+ ve" },
-  { __LINE__, "%+#e", "%+#ve" },
-  { __LINE__, "%+'e", "%+'ve" },
-  { __LINE__, "%+0e", "%+0ve" },
-  { __LINE__, "% #e", "% #ve" },
-  { __LINE__, "% 'e", "% 've" },
-  { __LINE__, "% 0e", "% 0ve" },
-  { __LINE__, "%#'e", "%#'ve" },
-  { __LINE__, "%#0e", "%#0ve" },
-  { __LINE__, "%'0e", "%'0ve" },
+  { __LINE__, "%-+e", "%-+ve", NULL },
+  { __LINE__, "%- e", "%- ve", NULL },
+  { __LINE__, "%-#e", "%-#ve", NULL },
+  { __LINE__, "%-'e", "%-'ve", NULL },
+  { __LINE__, "%-0e", "%-0ve", NULL },
+  { __LINE__, "%+ e", "%+ ve", NULL },
+  { __LINE__, "%+#e", "%+#ve", NULL },
+  { __LINE__, "%+'e", "%+'ve", NULL },
+  { __LINE__, "%+0e", "%+0ve", NULL },
+  { __LINE__, "% #e", "% #ve", NULL },
+  { __LINE__, "% 'e", "% 've", NULL },
+  { __LINE__, "% 0e", "% 0ve", NULL },
+  { __LINE__, "%#'e", "%#'ve", NULL },
+  { __LINE__, "%#0e", "%#0ve", NULL },
+  { __LINE__, "%'0e", "%'0ve", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9e",  "%.9ve" },
-  { __LINE__, "%-.9e",  "%-.9ve" },
-  { __LINE__, "%+.9e",  "%+.9ve" },
-  { __LINE__, "% .9e",  "% .9ve" },
-  { __LINE__, "%#.9e",  "%#.9ve" },
-  { __LINE__, "%'.9e",  "%'.9ve" },
-  { __LINE__, "%0.9e",  "%0.9ve" },
+  { __LINE__, "%.9e",  "%.9ve", NULL },
+  { __LINE__, "%-.9e",  "%-.9ve", NULL },
+  { __LINE__, "%+.9e",  "%+.9ve", NULL },
+  { __LINE__, "% .9e",  "% .9ve", NULL },
+  { __LINE__, "%#.9e",  "%#.9ve", NULL },
+  { __LINE__, "%'.9e",  "%'.9ve", NULL },
+  { __LINE__, "%0.9e",  "%0.9ve", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20e",  "%20ve" },
-  { __LINE__, "%-20e",  "%-20ve" },
-  { __LINE__, "%+20e",  "%+20ve" },
-  { __LINE__, "% 20e",  "% 20ve" },
-  { __LINE__, "%#20e",  "%#20ve" },
-  { __LINE__, "%'20e",  "%'20ve" },
-  { __LINE__, "%020e",  "%020ve" },
+  { __LINE__, "%20e",  "%20ve", NULL },
+  { __LINE__, "%-20e",  "%-20ve", NULL },
+  { __LINE__, "%+20e",  "%+20ve", NULL },
+  { __LINE__, "% 20e",  "% 20ve", NULL },
+  { __LINE__, "%#20e",  "%#20ve", NULL },
+  { __LINE__, "%'20e",  "%'20ve", NULL },
+  { __LINE__, "%020e",  "%020ve", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3e",  "%25.3ve" },
-  { __LINE__, "%-25.3e",  "%-25.3ve" },
-  { __LINE__, "%+25.3e",  "%+25.3ve" },
-  { __LINE__, "% 25.3e",  "% 25.3ve" },
-  { __LINE__, "%#25.3e",  "%#25.3ve" },
-  { __LINE__, "%'25.3e",  "%'25.3ve" },
-  { __LINE__, "%025.3e",  "%025.3ve" },
+  { __LINE__, "%25.3e",  "%25.3ve", NULL },
+  { __LINE__, "%-25.3e",  "%-25.3ve", NULL },
+  { __LINE__, "%+25.3e",  "%+25.3ve", NULL },
+  { __LINE__, "% 25.3e",  "% 25.3ve", NULL },
+  { __LINE__, "%#25.3e",  "%#25.3ve", NULL },
+  { __LINE__, "%'25.3e",  "%'25.3ve", NULL },
+  { __LINE__, "%025.3e",  "%025.3ve", NULL },
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%E",  "%vE" },
-  { __LINE__, "%-E", "%-vE" },
-  { __LINE__, "%+E", "%+vE" },
-  { __LINE__, "% E", "% vE" },
-  { __LINE__, "%#E", "%#vE" },
-  { __LINE__, "%'E", "%'vE" },
-  { __LINE__, "%0E", "%0vE" },
+  { __LINE__, "%E",  "%vE", NULL },
+  { __LINE__, "%-E", "%-vE", NULL },
+  { __LINE__, "%+E", "%+vE", NULL },
+  { __LINE__, "% E", "% vE", NULL },
+  { __LINE__, "%#E", "%#vE", NULL },
+  { __LINE__, "%'E", "%'vE", NULL },
+  { __LINE__, "%0E", "%0vE", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+E", "%-+vE" },
-  { __LINE__, "%- E", "%- vE" },
-  { __LINE__, "%-#E", "%-#vE" },
-  { __LINE__, "%-'E", "%-'vE" },
-  { __LINE__, "%-0E", "%-0vE" },
-  { __LINE__, "%+ E", "%+ vE" },
-  { __LINE__, "%+#E", "%+#vE" },
-  { __LINE__, "%+'E", "%+'vE" },
-  { __LINE__, "%+0E", "%+0vE" },
-  { __LINE__, "% #E", "% #vE" },
-  { __LINE__, "% 'E", "% 'vE" },
-  { __LINE__, "% 0E", "% 0vE" },
-  { __LINE__, "%#'E", "%#'vE" },
-  { __LINE__, "%#0E", "%#0vE" },
-  { __LINE__, "%'0E", "%'0vE" },
+  { __LINE__, "%-+E", "%-+vE", NULL },
+  { __LINE__, "%- E", "%- vE", NULL },
+  { __LINE__, "%-#E", "%-#vE", NULL },
+  { __LINE__, "%-'E", "%-'vE", NULL },
+  { __LINE__, "%-0E", "%-0vE", NULL },
+  { __LINE__, "%+ E", "%+ vE", NULL },
+  { __LINE__, "%+#E", "%+#vE", NULL },
+  { __LINE__, "%+'E", "%+'vE", NULL },
+  { __LINE__, "%+0E", "%+0vE", NULL },
+  { __LINE__, "% #E", "% #vE", NULL },
+  { __LINE__, "% 'E", "% 'vE", NULL },
+  { __LINE__, "% 0E", "% 0vE", NULL },
+  { __LINE__, "%#'E", "%#'vE", NULL },
+  { __LINE__, "%#0E", "%#0vE", NULL },
+  { __LINE__, "%'0E", "%'0vE", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9E",  "%.9vE" },
-  { __LINE__, "%-.9E",  "%-.9vE" },
-  { __LINE__, "%+.9E",  "%+.9vE" },
-  { __LINE__, "% .9E",  "% .9vE" },
-  { __LINE__, "%#.9E",  "%#.9vE" },
-  { __LINE__, "%'.9E",  "%'.9vE" },
-  { __LINE__, "%0.9E",  "%0.9vE" },
+  { __LINE__, "%.9E",  "%.9vE", NULL },
+  { __LINE__, "%-.9E",  "%-.9vE", NULL },
+  { __LINE__, "%+.9E",  "%+.9vE", NULL },
+  { __LINE__, "% .9E",  "% .9vE", NULL },
+  { __LINE__, "%#.9E",  "%#.9vE", NULL },
+  { __LINE__, "%'.9E",  "%'.9vE", NULL },
+  { __LINE__, "%0.9E",  "%0.9vE", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20E",  "%20vE" },
-  { __LINE__, "%-20E",  "%-20vE" },
-  { __LINE__, "%+20E",  "%+20vE" },
-  { __LINE__, "% 20E",  "% 20vE" },
-  { __LINE__, "%#20E",  "%#20vE" },
-  { __LINE__, "%'20E",  "%'20vE" },
-  { __LINE__, "%020E",  "%020vE" },
+  { __LINE__, "%20E",  "%20vE", NULL },
+  { __LINE__, "%-20E",  "%-20vE", NULL },
+  { __LINE__, "%+20E",  "%+20vE", NULL },
+  { __LINE__, "% 20E",  "% 20vE", NULL },
+  { __LINE__, "%#20E",  "%#20vE", NULL },
+  { __LINE__, "%'20E",  "%'20vE", NULL },
+  { __LINE__, "%020E",  "%020vE", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3E",  "%25.3vE" },
-  { __LINE__, "%-25.3E",  "%-25.3vE" },
-  { __LINE__, "%+25.3E",  "%+25.3vE" },
-  { __LINE__, "% 25.3E",  "% 25.3vE" },
-  { __LINE__, "%#25.3E",  "%#25.3vE" },
-  { __LINE__, "%'25.3E",  "%'25.3vE" },
-  { __LINE__, "%025.3E",  "%025.3vE" },
+  { __LINE__, "%25.3E",  "%25.3vE", NULL },
+  { __LINE__, "%-25.3E",  "%-25.3vE", NULL },
+  { __LINE__, "%+25.3E",  "%+25.3vE", NULL },
+  { __LINE__, "% 25.3E",  "% 25.3vE", NULL },
+  { __LINE__, "%#25.3E",  "%#25.3vE", NULL },
+  { __LINE__, "%'25.3E",  "%'25.3vE", NULL },
+  { __LINE__, "%025.3E",  "%025.3vE", NULL },
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%g",  "%vg" },
-  { __LINE__, "%-g", "%-vg" },
-  { __LINE__, "%+g", "%+vg" },
-  { __LINE__, "% g", "% vg" },
-  { __LINE__, "%#g", "%#vg" },
-  { __LINE__, "%'g", "%'vg" },
-  { __LINE__, "%0g", "%0vg" },
+  { __LINE__, "%g",  "%vg", NULL },
+  { __LINE__, "%-g", "%-vg", NULL },
+  { __LINE__, "%+g", "%+vg", NULL },
+  { __LINE__, "% g", "% vg", NULL },
+  { __LINE__, "%#g", "%#vg", NULL },
+  { __LINE__, "%'g", "%'vg", NULL },
+  { __LINE__, "%0g", "%0vg", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+g", "%-+vg" },
-  { __LINE__, "%- g", "%- vg" },
-  { __LINE__, "%-#g", "%-#vg" },
-  { __LINE__, "%-'g", "%-'vg" },
-  { __LINE__, "%-0g", "%-0vg" },
-  { __LINE__, "%+ g", "%+ vg" },
-  { __LINE__, "%+#g", "%+#vg" },
-  { __LINE__, "%+'g", "%+'vg" },
-  { __LINE__, "%+0g", "%+0vg" },
-  { __LINE__, "% #g", "% #vg" },
-  { __LINE__, "% 'g", "% 'vg" },
-  { __LINE__, "% 0g", "% 0vg" },
-  { __LINE__, "%#'g", "%#'vg" },
-  { __LINE__, "%#0g", "%#0vg" },
-  { __LINE__, "%'0g", "%'0vg" },
+  { __LINE__, "%-+g", "%-+vg", NULL },
+  { __LINE__, "%- g", "%- vg", NULL },
+  { __LINE__, "%-#g", "%-#vg", NULL },
+  { __LINE__, "%-'g", "%-'vg", NULL },
+  { __LINE__, "%-0g", "%-0vg", NULL },
+  { __LINE__, "%+ g", "%+ vg", NULL },
+  { __LINE__, "%+#g", "%+#vg", NULL },
+  { __LINE__, "%+'g", "%+'vg", NULL },
+  { __LINE__, "%+0g", "%+0vg", NULL },
+  { __LINE__, "% #g", "% #vg", NULL },
+  { __LINE__, "% 'g", "% 'vg", NULL },
+  { __LINE__, "% 0g", "% 0vg", NULL },
+  { __LINE__, "%#'g", "%#'vg", NULL },
+  { __LINE__, "%#0g", "%#0vg", NULL },
+  { __LINE__, "%'0g", "%'0vg", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9g",  "%.9vg" },
-  { __LINE__, "%-.9g",  "%-.9vg" },
-  { __LINE__, "%+.9g",  "%+.9vg" },
-  { __LINE__, "% .9g",  "% .9vg" },
-  { __LINE__, "%#.9g",  "%#.9vg" },
-  { __LINE__, "%'.9g",  "%'.9vg" },
-  { __LINE__, "%0.9g",  "%0.9vg" },
+  { __LINE__, "%.9g",  "%.9vg", NULL },
+  { __LINE__, "%-.9g",  "%-.9vg", NULL },
+  { __LINE__, "%+.9g",  "%+.9vg", NULL },
+  { __LINE__, "% .9g",  "% .9vg", NULL },
+  { __LINE__, "%#.9g",  "%#.9vg", NULL },
+  { __LINE__, "%'.9g",  "%'.9vg", NULL },
+  { __LINE__, "%0.9g",  "%0.9vg", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20g",  "%20vg" },
-  { __LINE__, "%-20g",  "%-20vg" },
-  { __LINE__, "%+20g",  "%+20vg" },
-  { __LINE__, "% 20g",  "% 20vg" },
-  { __LINE__, "%#20g",  "%#20vg" },
-  { __LINE__, "%'20g",  "%'20vg" },
-  { __LINE__, "%020g",  "%020vg" },
+  { __LINE__, "%20g",  "%20vg", NULL },
+  { __LINE__, "%-20g",  "%-20vg", NULL },
+  { __LINE__, "%+20g",  "%+20vg", NULL },
+  { __LINE__, "% 20g",  "% 20vg", NULL },
+  { __LINE__, "%#20g",  "%#20vg", NULL },
+  { __LINE__, "%'20g",  "%'20vg", NULL },
+  { __LINE__, "%020g",  "%020vg", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3g",  "%25.3vg" },
-  { __LINE__, "%-25.3g",  "%-25.3vg" },
-  { __LINE__, "%+25.3g",  "%+25.3vg" },
-  { __LINE__, "% 25.3g",  "% 25.3vg" },
-  { __LINE__, "%#25.3g",  "%#25.3vg" },
-  { __LINE__, "%'25.3g",  "%'25.3vg" },
-  { __LINE__, "%025.3g",  "%025.3vg" },
+  { __LINE__, "%25.3g",  "%25.3vg", NULL },
+  { __LINE__, "%-25.3g",  "%-25.3vg", NULL },
+  { __LINE__, "%+25.3g",  "%+25.3vg", NULL },
+  { __LINE__, "% 25.3g",  "% 25.3vg", NULL },
+  { __LINE__, "%#25.3g",  "%#25.3vg", NULL },
+  { __LINE__, "%'25.3g",  "%'25.3vg", NULL },
+  { __LINE__, "%025.3g",  "%025.3vg", NULL },
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%G",  "%vG" },
-  { __LINE__, "%-G", "%-vG" },
-  { __LINE__, "%+G", "%+vG" },
-  { __LINE__, "% G", "% vG" },
-  { __LINE__, "%#G", "%#vG" },
-  { __LINE__, "%'G", "%'vG" },
-  { __LINE__, "%0G", "%0vG" },
+  { __LINE__, "%G",  "%vG", NULL },
+  { __LINE__, "%-G", "%-vG", NULL },
+  { __LINE__, "%+G", "%+vG", NULL },
+  { __LINE__, "% G", "% vG", NULL },
+  { __LINE__, "%#G", "%#vG", NULL },
+  { __LINE__, "%'G", "%'vG", NULL },
+  { __LINE__, "%0G", "%0vG", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+G", "%-+vG" },
-  { __LINE__, "%- G", "%- vG" },
-  { __LINE__, "%-#G", "%-#vG" },
-  { __LINE__, "%-'G", "%-'vG" },
-  { __LINE__, "%-0G", "%-0vG" },
-  { __LINE__, "%+ G", "%+ vG" },
-  { __LINE__, "%+#G", "%+#vG" },
-  { __LINE__, "%+'G", "%+'vG" },
-  { __LINE__, "%+0G", "%+0vG" },
-  { __LINE__, "% #G", "% #vG" },
-  { __LINE__, "% 'G", "% 'vG" },
-  { __LINE__, "% 0G", "% 0vG" },
-  { __LINE__, "%#'G", "%#'vG" },
-  { __LINE__, "%#0G", "%#0vG" },
-  { __LINE__, "%'0G", "%'0vG" },
+  { __LINE__, "%-+G", "%-+vG", NULL },
+  { __LINE__, "%- G", "%- vG", NULL },
+  { __LINE__, "%-#G", "%-#vG", NULL },
+  { __LINE__, "%-'G", "%-'vG", NULL },
+  { __LINE__, "%-0G", "%-0vG", NULL },
+  { __LINE__, "%+ G", "%+ vG", NULL },
+  { __LINE__, "%+#G", "%+#vG", NULL },
+  { __LINE__, "%+'G", "%+'vG", NULL },
+  { __LINE__, "%+0G", "%+0vG", NULL },
+  { __LINE__, "% #G", "% #vG", NULL },
+  { __LINE__, "% 'G", "% 'vG", NULL },
+  { __LINE__, "% 0G", "% 0vG", NULL },
+  { __LINE__, "%#'G", "%#'vG", NULL },
+  { __LINE__, "%#0G", "%#0vG", NULL },
+  { __LINE__, "%'0G", "%'0vG", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9G",  "%.9vG" },
-  { __LINE__, "%-.9G",  "%-.9vG" },
-  { __LINE__, "%+.9G",  "%+.9vG" },
-  { __LINE__, "% .9G",  "% .9vG" },
-  { __LINE__, "%#.9G",  "%#.9vG" },
-  { __LINE__, "%'.9G",  "%'.9vG" },
-  { __LINE__, "%0.9G",  "%0.9vG" },
+  { __LINE__, "%.9G",  "%.9vG", NULL },
+  { __LINE__, "%-.9G",  "%-.9vG", NULL },
+  { __LINE__, "%+.9G",  "%+.9vG", NULL },
+  { __LINE__, "% .9G",  "% .9vG", NULL },
+  { __LINE__, "%#.9G",  "%#.9vG", NULL },
+  { __LINE__, "%'.9G",  "%'.9vG", NULL },
+  { __LINE__, "%0.9G",  "%0.9vG", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20G",  "%20vG" },
-  { __LINE__, "%-20G",  "%-20vG" },
-  { __LINE__, "%+20G",  "%+20vG" },
-  { __LINE__, "% 20G",  "% 20vG" },
-  { __LINE__, "%#20G",  "%#20vG" },
-  { __LINE__, "%'20G",  "%'20vG" },
-  { __LINE__, "%020G",  "%020vG" },
+  { __LINE__, "%20G",  "%20vG", NULL },
+  { __LINE__, "%-20G",  "%-20vG", NULL },
+  { __LINE__, "%+20G",  "%+20vG", NULL },
+  { __LINE__, "% 20G",  "% 20vG", NULL },
+  { __LINE__, "%#20G",  "%#20vG", NULL },
+  { __LINE__, "%'20G",  "%'20vG", NULL },
+  { __LINE__, "%020G",  "%020vG", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3G",  "%25.3vG" },
-  { __LINE__, "%-25.3G",  "%-25.3vG" },
-  { __LINE__, "%+25.3G",  "%+25.3vG" },
-  { __LINE__, "% 25.3G",  "% 25.3vG" },
-  { __LINE__, "%#25.3G",  "%#25.3vG" },
-  { __LINE__, "%'25.3G",  "%'25.3vG" },
-  { __LINE__, "%025.3G",  "%025.3vG" },
+  { __LINE__, "%25.3G",  "%25.3vG", NULL },
+  { __LINE__, "%-25.3G",  "%-25.3vG", NULL },
+  { __LINE__, "%+25.3G",  "%+25.3vG", NULL },
+  { __LINE__, "% 25.3G",  "% 25.3vG", NULL },
+  { __LINE__, "%#25.3G",  "%#25.3vG", NULL },
+  { __LINE__, "%'25.3G",  "%'25.3vG", NULL },
+  { __LINE__, "%025.3G",  "%025.3vG", NULL },
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%a",  "%va" },
-  { __LINE__, "%-a", "%-va" },
-  { __LINE__, "%+a", "%+va" },
-  { __LINE__, "% a", "% va" },
-  { __LINE__, "%#a", "%#va" },
-  { __LINE__, "%'a", "%'va" },
-  { __LINE__, "%0a", "%0va" },
+  { __LINE__, "%a",  "%va", NULL },
+  { __LINE__, "%-a", "%-va", NULL },
+  { __LINE__, "%+a", "%+va", NULL },
+  { __LINE__, "% a", "% va", NULL },
+  { __LINE__, "%#a", "%#va", NULL },
+  { __LINE__, "%'a", "%'va", NULL },
+  { __LINE__, "%0a", "%0va", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+a", "%-+va" },
-  { __LINE__, "%- a", "%- va" },
-  { __LINE__, "%-#a", "%-#va" },
-  { __LINE__, "%-'a", "%-'va" },
-  { __LINE__, "%-0a", "%-0va" },
-  { __LINE__, "%+ a", "%+ va" },
-  { __LINE__, "%+#a", "%+#va" },
-  { __LINE__, "%+'a", "%+'va" },
-  { __LINE__, "%+0a", "%+0va" },
-  { __LINE__, "% #a", "% #va" },
-  { __LINE__, "% 'a", "% 'va" },
-  { __LINE__, "% 0a", "% 0va" },
-  { __LINE__, "%#'a", "%#'va" },
-  { __LINE__, "%#0a", "%#0va" },
-  { __LINE__, "%'0a", "%'0va" },
+  { __LINE__, "%-+a", "%-+va", NULL },
+  { __LINE__, "%- a", "%- va", NULL },
+  { __LINE__, "%-#a", "%-#va", NULL },
+  { __LINE__, "%-'a", "%-'va", NULL },
+  { __LINE__, "%-0a", "%-0va", NULL },
+  { __LINE__, "%+ a", "%+ va", NULL },
+  { __LINE__, "%+#a", "%+#va", NULL },
+  { __LINE__, "%+'a", "%+'va", NULL },
+  { __LINE__, "%+0a", "%+0va", NULL },
+  { __LINE__, "% #a", "% #va", NULL },
+  { __LINE__, "% 'a", "% 'va", NULL },
+  { __LINE__, "% 0a", "% 0va", NULL },
+  { __LINE__, "%#'a", "%#'va", NULL },
+  { __LINE__, "%#0a", "%#0va", NULL },
+  { __LINE__, "%'0a", "%'0va", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9a",  "%.9va" },
-  { __LINE__, "%-.9a",  "%-.9va" },
-  { __LINE__, "%+.9a",  "%+.9va" },
-  { __LINE__, "% .9a",  "% .9va" },
-  { __LINE__, "%#.9a",  "%#.9va" },
-  { __LINE__, "%'.9a",  "%'.9va" },
-  { __LINE__, "%0.9a",  "%0.9va" },
+  { __LINE__, "%.9a",  "%.9va", NULL },
+  { __LINE__, "%-.9a",  "%-.9va", NULL },
+  { __LINE__, "%+.9a",  "%+.9va", NULL },
+  { __LINE__, "% .9a",  "% .9va", NULL },
+  { __LINE__, "%#.9a",  "%#.9va", NULL },
+  { __LINE__, "%'.9a",  "%'.9va", NULL },
+  { __LINE__, "%0.9a",  "%0.9va", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20a",  "%20va" },
-  { __LINE__, "%-20a",  "%-20va" },
-  { __LINE__, "%+20a",  "%+20va" },
-  { __LINE__, "% 20a",  "% 20va" },
-  { __LINE__, "%#20a",  "%#20va" },
-  { __LINE__, "%'20a",  "%'20va" },
-  { __LINE__, "%020a",  "%020va" },
+  { __LINE__, "%20a",  "%20va", NULL },
+  { __LINE__, "%-20a",  "%-20va", NULL },
+  { __LINE__, "%+20a",  "%+20va", NULL },
+  { __LINE__, "% 20a",  "% 20va", NULL },
+  { __LINE__, "%#20a",  "%#20va", NULL },
+  { __LINE__, "%'20a",  "%'20va", NULL },
+  { __LINE__, "%020a",  "%020va", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3a",  "%25.3va" },
-  { __LINE__, "%-25.3a",  "%-25.3va" },
-  { __LINE__, "%+25.3a",  "%+25.3va" },
-  { __LINE__, "% 25.3a",  "% 25.3va" },
-  { __LINE__, "%#25.3a",  "%#25.3va" },
-  { __LINE__, "%'25.3a",  "%'25.3va" },
-  { __LINE__, "%025.3a",  "%025.3va" },
+  { __LINE__, "%25.3a",  "%25.3va", NULL },
+  { __LINE__, "%-25.3a",  "%-25.3va", NULL },
+  { __LINE__, "%+25.3a",  "%+25.3va", NULL },
+  { __LINE__, "% 25.3a",  "% 25.3va", NULL },
+  { __LINE__, "%#25.3a",  "%#25.3va", NULL },
+  { __LINE__, "%'25.3a",  "%'25.3va", NULL },
+  { __LINE__, "%025.3a",  "%025.3va", NULL },
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%A",  "%vA" },
-  { __LINE__, "%-A", "%-vA" },
-  { __LINE__, "%+A", "%+vA" },
-  { __LINE__, "% A", "% vA" },
-  { __LINE__, "%#A", "%#vA" },
-  { __LINE__, "%'A", "%'vA" },
-  { __LINE__, "%0A", "%0vA" },
+  { __LINE__, "%A",  "%vA", NULL },
+  { __LINE__, "%-A", "%-vA", NULL },
+  { __LINE__, "%+A", "%+vA", NULL },
+  { __LINE__, "% A", "% vA", NULL },
+  { __LINE__, "%#A", "%#vA", NULL },
+  { __LINE__, "%'A", "%'vA", NULL },
+  { __LINE__, "%0A", "%0vA", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+A", "%-+vA" },
-  { __LINE__, "%- A", "%- vA" },
-  { __LINE__, "%-#A", "%-#vA" },
-  { __LINE__, "%-'A", "%-'vA" },
-  { __LINE__, "%-0A", "%-0vA" },
-  { __LINE__, "%+ A", "%+ vA" },
-  { __LINE__, "%+#A", "%+#vA" },
-  { __LINE__, "%+'A", "%+'vA" },
-  { __LINE__, "%+0A", "%+0vA" },
-  { __LINE__, "% #A", "% #vA" },
-  { __LINE__, "% 'A", "% 'vA" },
-  { __LINE__, "% 0A", "% 0vA" },
-  { __LINE__, "%#'A", "%#'vA" },
-  { __LINE__, "%#0A", "%#0vA" },
-  { __LINE__, "%'0A", "%'0vA" },
+  { __LINE__, "%-+A", "%-+vA", NULL },
+  { __LINE__, "%- A", "%- vA", NULL },
+  { __LINE__, "%-#A", "%-#vA", NULL },
+  { __LINE__, "%-'A", "%-'vA", NULL },
+  { __LINE__, "%-0A", "%-0vA", NULL },
+  { __LINE__, "%+ A", "%+ vA", NULL },
+  { __LINE__, "%+#A", "%+#vA", NULL },
+  { __LINE__, "%+'A", "%+'vA", NULL },
+  { __LINE__, "%+0A", "%+0vA", NULL },
+  { __LINE__, "% #A", "% #vA", NULL },
+  { __LINE__, "% 'A", "% 'vA", NULL },
+  { __LINE__, "% 0A", "% 0vA", NULL },
+  { __LINE__, "%#'A", "%#'vA", NULL },
+  { __LINE__, "%#0A", "%#0vA", NULL },
+  { __LINE__, "%'0A", "%'0vA", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9A",  "%.9vA" },
-  { __LINE__, "%-.9A",  "%-.9vA" },
-  { __LINE__, "%+.9A",  "%+.9vA" },
-  { __LINE__, "% .9A",  "% .9vA" },
-  { __LINE__, "%#.9A",  "%#.9vA" },
-  { __LINE__, "%'.9A",  "%'.9vA" },
-  { __LINE__, "%0.9A",  "%0.9vA" },
+  { __LINE__, "%.9A",  "%.9vA", NULL },
+  { __LINE__, "%-.9A",  "%-.9vA", NULL },
+  { __LINE__, "%+.9A",  "%+.9vA", NULL },
+  { __LINE__, "% .9A",  "% .9vA", NULL },
+  { __LINE__, "%#.9A",  "%#.9vA", NULL },
+  { __LINE__, "%'.9A",  "%'.9vA", NULL },
+  { __LINE__, "%0.9A",  "%0.9vA", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20A",  "%20vA" },
-  { __LINE__, "%-20A",  "%-20vA" },
-  { __LINE__, "%+20A",  "%+20vA" },
-  { __LINE__, "% 20A",  "% 20vA" },
-  { __LINE__, "%#20A",  "%#20vA" },
-  { __LINE__, "%'20A",  "%'20vA" },
-  { __LINE__, "%020A",  "%020vA" },
+  { __LINE__, "%20A",  "%20vA", NULL },
+  { __LINE__, "%-20A",  "%-20vA", NULL },
+  { __LINE__, "%+20A",  "%+20vA", NULL },
+  { __LINE__, "% 20A",  "% 20vA", NULL },
+  { __LINE__, "%#20A",  "%#20vA", NULL },
+  { __LINE__, "%'20A",  "%'20vA", NULL },
+  { __LINE__, "%020A",  "%020vA", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3A",  "%25.3vA" },
-  { __LINE__, "%-25.3A",  "%-25.3vA" },
-  { __LINE__, "%+25.3A",  "%+25.3vA" },
-  { __LINE__, "% 25.3A",  "% 25.3vA" },
-  { __LINE__, "%#25.3A",  "%#25.3vA" },
-  { __LINE__, "%'25.3A",  "%'25.3vA" },
-  { __LINE__, "%025.3A",  "%025.3vA" },
+  { __LINE__, "%25.3A",  "%25.3vA", NULL },
+  { __LINE__, "%-25.3A",  "%-25.3vA", NULL },
+  { __LINE__, "%+25.3A",  "%+25.3vA", NULL },
+  { __LINE__, "% 25.3A",  "% 25.3vA", NULL },
+  { __LINE__, "%#25.3A",  "%#25.3vA", NULL },
+  { __LINE__, "%'25.3A",  "%'25.3vA", NULL },
+  { __LINE__, "%025.3A",  "%025.3vA", NULL },
 
   { 0, NULL, NULL }
 };
 
 #ifdef __VSX__
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-} double_type;
-
-#define DOUBLE_TEST_VECTOR { -(11.0f/9.0f), 9876543210.123456789f }
-
-double_type double_tests[] =
+format_specifiers double_tests[] =
 {
-  { __LINE__, "%f",  "%vvf" },
-  { __LINE__, "%-f",  "%-vvf" },
-  { __LINE__, "%+f",  "%+vvf" },
-  { __LINE__, "% f",  "% vvf" },
-  { __LINE__, "%#f",  "%#vvf" },
-  { __LINE__, "%'f",  "%'vvf" },
-  { __LINE__, "%0f",  "%0vvf" },
+  { __LINE__, "%f",  "%vvf", NULL },
+  { __LINE__, "%-f",  "%-vvf", NULL },
+  { __LINE__, "%+f",  "%+vvf", NULL },
+  { __LINE__, "% f",  "% vvf", NULL },
+  { __LINE__, "%#f",  "%#vvf", NULL },
+  { __LINE__, "%'f",  "%'vvf", NULL },
+  { __LINE__, "%0f",  "%0vvf", NULL },
 
   /* Basic flags.  Not all flags are supported with this data type. */
-  { __LINE__, "%f",  "%vvf" },
-  { __LINE__, "%-f", "%-vvf" },
-  { __LINE__, "%+f", "%+vvf" },
-  { __LINE__, "% f", "% vvf" },
-  { __LINE__, "%#f", "%#vvf" },
-  { __LINE__, "%'f", "%'vvf" },
-  { __LINE__, "%0f", "%0vvf" },
+  { __LINE__, "%f",  "%vvf", NULL },
+  { __LINE__, "%-f", "%-vvf", NULL },
+  { __LINE__, "%+f", "%+vvf", NULL },
+  { __LINE__, "% f", "% vvf", NULL },
+  { __LINE__, "%#f", "%#vvf", NULL },
+  { __LINE__, "%'f", "%'vvf", NULL },
+  { __LINE__, "%0f", "%0vvf", NULL },
 
   /* All combinations of two flags, some of which don't make sense. */
-  { __LINE__, "%-+f", "%-+vvf" },
-  { __LINE__, "%- f", "%- vvf" },
-  { __LINE__, "%-#f", "%-#vvf" },
-  { __LINE__, "%-'f", "%-'vvf" },
-  { __LINE__, "%-0f", "%-0vvf" },
-  { __LINE__, "%+ f", "%+ vvf" },
-  { __LINE__, "%+#f", "%+#vvf" },
-  { __LINE__, "%+'f", "%+'vvf" },
-  { __LINE__, "%+0f", "%+0vvf" },
-  { __LINE__, "% #f", "% #vvf" },
-  { __LINE__, "% 'f", "% 'vvf" },
-  { __LINE__, "% 0f", "% 0vvf" },
-  { __LINE__, "%#'f", "%#'vvf" },
-  { __LINE__, "%#0f", "%#0vvf" },
-  { __LINE__, "%'0f", "%'0vvf" },
+  { __LINE__, "%-+f", "%-+vvf", NULL },
+  { __LINE__, "%- f", "%- vvf", NULL },
+  { __LINE__, "%-#f", "%-#vvf", NULL },
+  { __LINE__, "%-'f", "%-'vvf", NULL },
+  { __LINE__, "%-0f", "%-0vvf", NULL },
+  { __LINE__, "%+ f", "%+ vvf", NULL },
+  { __LINE__, "%+#f", "%+#vvf", NULL },
+  { __LINE__, "%+'f", "%+'vvf", NULL },
+  { __LINE__, "%+0f", "%+0vvf", NULL },
+  { __LINE__, "% #f", "% #vvf", NULL },
+  { __LINE__, "% 'f", "% 'vvf", NULL },
+  { __LINE__, "% 0f", "% 0vvf", NULL },
+  { __LINE__, "%#'f", "%#'vvf", NULL },
+  { __LINE__, "%#0f", "%#0vvf", NULL },
+  { __LINE__, "%'0f", "%'0vvf", NULL },
 
   /* Basic flags with precision. */
-  { __LINE__, "%.9f",  "%.9vvf" },
-  { __LINE__, "%-.9f",  "%-.9vvf" },
-  { __LINE__, "%+.9f",  "%+.9vvf" },
-  { __LINE__, "% .9f",  "% .9vvf" },
-  { __LINE__, "%#.9f",  "%#.9vvf" },
-  { __LINE__, "%'.9f",  "%'.9vvf" },
-  { __LINE__, "%0.9f",  "%0.9vvf" },
+  { __LINE__, "%.9f",  "%.9vvf", NULL },
+  { __LINE__, "%-.9f",  "%-.9vvf", NULL },
+  { __LINE__, "%+.9f",  "%+.9vvf", NULL },
+  { __LINE__, "% .9f",  "% .9vvf", NULL },
+  { __LINE__, "%#.9f",  "%#.9vvf", NULL },
+  { __LINE__, "%'.9f",  "%'.9vvf", NULL },
+  { __LINE__, "%0.9f",  "%0.9vvf", NULL },
 
   /* Basic flags with field width. */
-  { __LINE__, "%20f",  "%20vvf" },
-  { __LINE__, "%-20f",  "%-20vvf" },
-  { __LINE__, "%+20f",  "%+20vvf" },
-  { __LINE__, "% 20f",  "% 20vvf" },
-  { __LINE__, "%#20f",  "%#20vvf" },
-  { __LINE__, "%'20f",  "%'20vvf" },
-  { __LINE__, "%020f",  "%020vvf" },
+  { __LINE__, "%20f",  "%20vvf", NULL },
+  { __LINE__, "%-20f",  "%-20vvf", NULL },
+  { __LINE__, "%+20f",  "%+20vvf", NULL },
+  { __LINE__, "% 20f",  "% 20vvf", NULL },
+  { __LINE__, "%#20f",  "%#20vvf", NULL },
+  { __LINE__, "%'20f",  "%'20vvf", NULL },
+  { __LINE__, "%020f",  "%020vvf", NULL },
 
   /* Basic flags with field width and precision. */
-  { __LINE__, "%25.3f",  "%25.3vvf" },
-  { __LINE__, "%-25.3f",  "%-25.3vvf" },
-  { __LINE__, "%+25.3f",  "%+25.3vvf" },
-  { __LINE__, "% 25.3f",  "% 25.3vvf" },
-  { __LINE__, "%#25.3f",  "%#25.3vvf" },
-  { __LINE__, "%'25.3f",  "%'25.3vvf" },
-  { __LINE__, "%025.3f",  "%025.3vvf" },
+  { __LINE__, "%25.3f",  "%25.3vvf", NULL },
+  { __LINE__, "%-25.3f",  "%-25.3vvf", NULL },
+  { __LINE__, "%+25.3f",  "%+25.3vvf", NULL },
+  { __LINE__, "% 25.3f",  "% 25.3vvf", NULL },
+  { __LINE__, "%#25.3f",  "%#25.3vvf", NULL },
+  { __LINE__, "%'25.3f",  "%'25.3vvf", NULL },
+  { __LINE__, "%025.3f",  "%025.3vvf", NULL },
 
-  { 0, NULL, NULL }
+  { 0, NULL, NULL, NULL }
 };
 #endif
 
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-} char_type;
-
-/* vector unsigned char - Test just the 'character' range.  */
-#define CHAR_TEST_VECTOR { 't', 'h', 'i', 's', ' ', 's', 'p', 'a', 'c', 'e', ' ', 'i', 's', ' ', 'f', 'o'  }
-char_type char_tests[] =
+format_specifiers char_tests[] =
 {
-  { __LINE__, "%c",  "%vc" },
-  { 0, NULL, NULL }
+  { __LINE__, "%c",  "%vc", NULL },
+  { 0, NULL, NULL, NULL }
 };
 
-/* vector unsigned char - Test 0 - 255. */
-#define UNSIGNED_CHAR_TEST_VECTOR { 't', 'h', 'i', 's', ' ', 's', 'p', 'a', 'c', 'e', ' ', 0, 15, 127, 128, 255  }
-char_type unsigned_char_tests[] =
+format_specifiers unsigned_char_tests[] =
 {
-  { __LINE__, "%hho",  "%vo" },
-  { __LINE__, "%hhu",  "%vu" },
-  { __LINE__, "%hhx",  "%vx" },
-  { __LINE__, "%hhX",  "%vX" },
-  { 0, NULL, NULL }
+  { __LINE__, "%hho",  "%vo", NULL },
+  { __LINE__, "%hhu",  "%vu", NULL },
+  { __LINE__, "%hhx",  "%vx", NULL },
+  { __LINE__, "%hhX",  "%vX", NULL },
+  { 0, NULL, NULL, NULL }
 };
 
-/* vector signed char  */
-#define SIGNED_CHAR_TEST_VECTOR { -128, -120, -99, -61, -43, -38, -1, 0, 1, 19, 76, 85, 10l, 123, 126, 127 }
-
-char_type signed_char_tests[] =
+format_specifiers signed_char_tests[] =
 {
-  { __LINE__, "%hhd",  "%vd" },
-  { __LINE__, "%hhi",  "%vi" },
-  { 0, NULL, NULL }
+  { __LINE__, "%hhd",  "%vd", NULL },
+  { __LINE__, "%hhi",  "%vi", NULL },
+  { 0, NULL, NULL, NULL }
 };
 
 #ifdef HAVE_INT128_T
-
-typedef struct {
-  int src_line;
-  const char *format1;
-  const char *format2;
-  const char *format3;
-} int128_type;
-
-#define INT128_TEST_VECTOR  (vector __int128_t) { ((((__int128_t)-0x0123456789abcdefUL << 64)) + ((__int128_t)0xfedcba9876543210UL))}
-
-int128_type int128_tests[] =
+format_specifiers int128_tests[] =
 {
   /* Basic flags.  Not all flags are supported with this data type. */
   { __LINE__, "%lx",  "%vzx", "%zvx" },
@@ -1329,298 +1280,120 @@ int128_type int128_tests[] =
   { 0, NULL, NULL, NULL }
 };
 #endif
+
 void
-gen_cmp_str (int data_type, void *vec_ptr, const char *format_str, char *out_buffer, int out_buffer_len)
+gen_cmp_str (int data_type, void* data, const char *format, char *output)
 {
-  int index = 0;
   int i;
-  vp_u_t u;
-
-  memset (out_buffer, 0x0, out_buffer_len);
-
-  /* Copy the vector to our union */
-  memcpy (&u.v, vec_ptr, sizeof (vp_u_t));
+  memset (output, 0x0, 1024);
 
   switch (data_type) {
-
-    case VDT_unsigned_int: {
-      for (i = 0; i < 3; i++) {
-        index += sprintf (out_buffer + index, format_str, u.ui[i]);
-        strcat (out_buffer + index, " ");
-        index++;
-      }
-      sprintf (out_buffer + index, format_str, u.ui[3]);
+    case VDT_unsigned_int:
+      to_string (unsigned int, format, data, output);
       break;
-    }
-#ifdef HAVE_INT128_T
-    case VDT_int128: {
-# ifdef __LITTLE_ENDIAN__
-      index += sprintf (out_buffer, format_str, u.ul[1]);
-      sprintf (out_buffer + index, format_str, u.ul[0]);
-# else
-       index += sprintf (out_buffer, format_str, u.ul[0]);
-       sprintf (out_buffer + index, format_str, u.ul[1]);
-# endif
-       break;
-    }
-#endif
-    case VDT_signed_int: {
-      for (i = 0; i < 3; i++) {
-        index += sprintf (out_buffer + index, format_str, u.si[i]);
-        strcat (out_buffer + index, " ");
-        index++;
-      }
-      sprintf (out_buffer + index, format_str, u.si[3]);
+    case VDT_signed_int:
+      to_string (signed int, format, data, output);
       break;
-    }
-
-    case VDT_unsigned_short: {
-      for (i = 0; i < 7; i++) {
-        index += sprintf (out_buffer + index, format_str, u.sh[i]);
-        strcat (out_buffer + index, " ");
-        index++;
-      }
-      sprintf (out_buffer + index, format_str, u.sh[7]);
+    case VDT_unsigned_short:
+      to_string (unsigned short, format, data, output);
       break;
-    }
-
-    case VDT_signed_short: {
-      for (i = 0; i < 7; i++) {
-        index += sprintf (out_buffer + index, format_str, u.uh[i]);
-        strcat (out_buffer + index, " ");
-        index++;
-      }
-      sprintf (out_buffer + index, format_str, u.uh[7]);
+    case VDT_signed_short:
+      to_string (signed short, format, data, output);
       break;
-    }
-
-    case VDT_unsigned_char: {
-      for (i = 0; i < 15; i++) {
-        index += sprintf (out_buffer + index, format_str, u.uc[i]);
-        /* Kind of a hack.  Since the 'c' conversion specifier doesn't get a
-         * separator but 'd' and 'i' do we have to do a character check.  */
-        if (format_str[1] != 'c')
-          {
-            strcat (out_buffer + index, " ");
-            index++;
-          }
-      }
-      sprintf (out_buffer + index, format_str, u.uc[15]);
+    case VDT_unsigned_char:
+      for (i = 0; i < 15; i++)
+        {
+          output += sprintf (output, format, ((unsigned char*)data)[i]);
+          /* Kind of a hack.  Since the 'c' conversion specifier doesn't get a
+           * separator but 'd' and 'i' do we have to do a character check.  */
+          if (format[1] != 'c')
+              strcat (output++, " ");
+        }
+      sprintf (output, format, ((unsigned char*)data)[15]);
       break;
-    }
-
-    case VDT_signed_char: {
-      for (i = 0; i < 15; i++) {
-        index += sprintf (out_buffer + index, format_str, u.sc[i]);
-        /* This doesn't support the 'c' conversion.  */
-        strcat (out_buffer + index, " ");
-        index++;
-      }
-      sprintf (out_buffer + index, format_str, u.sc[15]);
+    case VDT_signed_char:
+      to_string (signed char, format, data, output);
       break;
-    }
-
-    case VDT_float: {
-      for (i = 0; i < 3; i++) {
-        index += sprintf (out_buffer + index, format_str, u.f[i]);
-        strcat (out_buffer + index, " ");
-        index++;
-      }
-      sprintf (out_buffer + index, format_str, u.f[3]);
+    case VDT_float:
+      to_string (float, format, data, output);
       break;
-    }
-
 #ifdef __VSX__
-    case VDT_double: {
-      index += sprintf (out_buffer, format_str, u.d[0]);
-      strcat (out_buffer + index, " ");
-      index++;
-      sprintf (out_buffer + index, format_str, u.d[1]);
+    case VDT_double:
+      to_string (double, format, data, output);
       break;
-    }
+#endif
+#ifdef HAVE_INT128_T
+    case VDT_int128:
+# ifdef __LITTLE_ENDIAN__
+      output += sprintf (output, format, ((unsigned long long*) data)[1]);
+      sprintf (output, format, ((unsigned long long*) data)[0]);
+# else
+      output += sprintf (output, format, ((unsigned long long*) data)[0]);
+      sprintf (output, format, ((unsigned long long*) data)[1]);
+# endif
+      break;
 #endif
   }
 }
 
-#define _COMPARE(src_line, expected, actual ) {\
-  if (strcmp( expected, actual )  ) { \
-    fprintf (stderr, "Error:   Expected: \"%s\", got \"%s\"  source: %s:%d\n", expected, actual, __FILE__, src_line); \
-    failed++; \
-  } \
-  else { \
-    if (Verbose) fprintf (stdout, "Success: Expected: \"%s\", got \"%s\"  source: %s:%d\n", expected, actual, __FILE__, src_line); \
-  } \
+void
+compare (int src_line, const char* expected, const char* actual)
+{
+  if (strcmp(expected, actual)) {
+    fprintf (stderr, "Error:   Expected: \"%s\", got \"%s\"  source: %s:%d\n", expected, actual, __FILE__, src_line);
+    failed++;
+  }
+  else if (verbose) {
+    fprintf (stdout, "Success: Expected: \"%s\", got \"%s\"  source: %s:%d\n", expected, actual, __FILE__, src_line);
+  }
+
+  test_count++;
 }
 
 int
 main (int argc, char *argv[])
 {
-  int Verbose = 0;
+  format_specifiers *ptr;
 
-  uint32_type *uint32_ptr;
-  int32_type  *int32_ptr;
-  uint16_type *uint16_ptr;
-  int16_type  *int16_ptr;
-  float_type  *float_ptr;
-  char_type   *char_ptr;
-#ifdef __VSX__
-  double_type  *double_ptr;
-#endif
-#ifdef HAVE_INT128_T
+  puts ("\nUnsigned 32 bit integer tests.\n");
+  test(uint32_tests, VDT_unsigned_int, UINT32_TEST_VECTOR)
 
-  int128_type *int128_ptr;
+  puts ("\nSigned 32 bit integer tests.\n");
+  test(int32_tests, VDT_signed_int, INT32_TEST_VECTOR)
 
-  puts ("\nint128 tests\n");
-  for (int128_ptr = int128_tests; int128_ptr->format1; int128_ptr++)
-    {
-      vector __int128_t val = INT128_TEST_VECTOR;
-      gen_cmp_str (VDT_int128, &val, int128_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, int128_ptr->format2, val);
-      _COMPARE (int128_ptr->src_line, expected_output, actual_output);
-      test_count++;
-      if (int128_ptr->format3) {
-        sprintf (actual_output, int128_ptr->format3, val);
-        _COMPARE (int128_ptr->src_line, expected_output, actual_output);
-        test_count++;
-      }
-    }
-#endif
+  puts ("\nUnsigned 16 bit integer tests.\n");
+  test(uint16_tests, VDT_unsigned_short, UINT16_TEST_VECTOR)
 
-  puts ("\nUnsigned 32 bit integer tests\n");
-  for (uint32_ptr = uint32_tests; uint32_ptr->format1; uint32_ptr++)
-    {
-      vector unsigned int val = UINT32_TEST_VECTOR;
-      gen_cmp_str (VDT_unsigned_int, &val, uint32_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, uint32_ptr->format2, val);
-      _COMPARE (uint32_ptr->src_line, expected_output, actual_output);
-      test_count++;
-      if (uint32_ptr->format3) {
-        sprintf (actual_output, uint32_ptr->format3, val);
-        _COMPARE (uint32_ptr->src_line, expected_output, actual_output);
-        test_count++;
-      }
-    }
+  puts ("\nSigned 16 bit integer tests.\n");
+  test(int16_tests, VDT_signed_short, INT16_TEST_VECTOR)
 
-  puts ("\nSigned 32 bit integer tests\n");
-  for (int32_ptr = int32_tests; int32_ptr->format1; int32_ptr++)
-    {
-      vector signed int val = INT32_TEST_VECTOR;
-      gen_cmp_str (VDT_signed_int, &val, int32_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, int32_ptr->format2, val);
-      _COMPARE (int32_ptr->src_line, expected_output, actual_output);
-      test_count++;
-      if (int32_ptr->format3) {
-        sprintf (actual_output, int32_ptr->format3, val);
-        _COMPARE (int32_ptr->src_line, expected_output, actual_output);
-        test_count++;
-      }
-    }
-
-  puts ("\nUnsigned 16 bit integer tests\n");
-  for (uint16_ptr = uint16_tests; uint16_ptr->format1; uint16_ptr++)
-    {
-      vector unsigned short val = UINT16_TEST_VECTOR;
-      gen_cmp_str (VDT_unsigned_short, &val, uint16_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, uint16_ptr->format2, val);
-      _COMPARE (uint16_ptr->src_line, expected_output, actual_output);
-      test_count++;
-      if (uint16_ptr->format3) {
-        sprintf (actual_output, uint16_ptr->format3, val);
-        _COMPARE (uint16_ptr->src_line, expected_output, actual_output);
-        test_count++;
-      }
-    }
-
-  puts ("\nSigned 16 bit integer tests\n");
-  for (int16_ptr = int16_tests; int16_ptr->format1; int16_ptr++)
-    {
-      vector signed short val = INT16_TEST_VECTOR;
-      gen_cmp_str (VDT_signed_short, &val, int16_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, int16_ptr->format2, val);
-      _COMPARE (int16_ptr->src_line, expected_output, actual_output);
-      test_count++;
-      if (int16_ptr->format3) {
-        sprintf (actual_output, int16_ptr->format3, val);
-        _COMPARE (int16_ptr->src_line, expected_output, actual_output);
-        test_count++;
-      }
-    }
-
-  puts ("\nFloat tests\n");
-  for (float_ptr = float_tests; float_ptr->format1; float_ptr++)
-    {
-      vector float val = FLOAT_TEST_VECTOR;
-      gen_cmp_str (VDT_float, &val, float_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, float_ptr->format2, val);
-      _COMPARE (float_ptr->src_line, expected_output, actual_output);
-      test_count++;
-    }
-
-#ifdef __VSX__
-  puts ("\nDouble tests (VSX)\n");
-  for (double_ptr = double_tests; double_ptr->format1; double_ptr++)
-    {
-      vector double val = DOUBLE_TEST_VECTOR;
-      gen_cmp_str (VDT_double, &val, double_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, double_ptr->format2, val);
-      _COMPARE (double_ptr->src_line, expected_output, actual_output);
-      test_count++;
-    }
-#endif
+  puts ("\nFloat tests.\n");
+  test(float_tests, VDT_float, FLOAT_TEST_VECTOR)
 
   puts ("\nChar tests - test 'character' ouput.\n");
-  for (char_ptr = char_tests; char_ptr->format1; char_ptr++)
-    {
-      vector unsigned char val = CHAR_TEST_VECTOR;
-      gen_cmp_str (VDT_unsigned_char, &val, char_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, char_ptr->format2, val);
-      _COMPARE (char_ptr->src_line, expected_output, actual_output);
-      test_count++;
-    }
+  test(char_tests, VDT_unsigned_char, CHAR_TEST_VECTOR)
 
   puts ("\nUnsigned Char tests - test 0 - 255.\n");
-  for (char_ptr = unsigned_char_tests; char_ptr->format1; char_ptr++)
-    {
-      vector unsigned char val = UNSIGNED_CHAR_TEST_VECTOR;
-      gen_cmp_str (VDT_unsigned_char, &val, char_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, char_ptr->format2, val);
-      _COMPARE (char_ptr->src_line, expected_output, actual_output);
-      test_count++;
-    }
+  test(unsigned_char_tests, VDT_unsigned_char, UNSIGNED_CHAR_TEST_VECTOR)
 
   puts ("\nSigned Char tests - test -128 - 127.\n");
-  for (char_ptr = signed_char_tests; char_ptr->format1; char_ptr++)
-    {
-      vector unsigned char val = SIGNED_CHAR_TEST_VECTOR;
-      gen_cmp_str (VDT_unsigned_char, &val, char_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, char_ptr->format2, val);
-      _COMPARE (char_ptr->src_line, expected_output, actual_output);
-      test_count++;
-    }
+  test(signed_char_tests, VDT_signed_char, SIGNED_CHAR_TEST_VECTOR)
 
-  /*
-  puts ("\nLocale printing tests\n");
-  setlocale(LC_NUMERIC, "en_US");
-  /+ Rerun signed tests +/
-  for (int32_ptr = int32_tests; int32_ptr->format1; int32_ptr++)
-    {
-      gen_cmp_str (VDT_signed_int, &int32_ptr->val, int32_ptr->format1, expected_output, 1024);
-      sprintf (actual_output, int32_ptr->format2, int32_ptr->val);
-      _COMPARE (int32_ptr->src_line, expected_output, actual_output);
-      test_count++;
-    }
-  */
+#ifdef HAVE_INT128_T
+  puts ("\nint128 tests.\n");
+  test(int128_tests, VDT_int128, INT128_TEST_VECTOR)
+#endif
 
-  if (failed)
-    {
-      fprintf (stderr, "\nWarning: %d tests failed!\n", failed);
-    }
-  else
-    {
-      printf ("\nAll tests passed (%d tests)\n", test_count);
-    }
+#ifdef __VSX__
+  puts ("\nDouble tests (VSX).\n");
+  test(double_tests, VDT_double, DOUBLE_TEST_VECTOR)
+#endif
 
-  if (failed) return 1;
+  if (failed) {
+    fprintf (stderr, "\nWarning: %d tests failed!\n", failed);
+    return 1;
+  }
 
+  printf ("\nAll tests passed (%d tests).\n", test_count);
   return 0;
 }
